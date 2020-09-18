@@ -1,0 +1,1225 @@
+#
+# auto-pts - The Bluetooth PTS Automation Framework
+#
+# Copyright (c) 2017, Intel Corporation.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms and conditions of the GNU General Public License,
+# version 2, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+
+import logging
+import sys
+import struct
+from pybtp import btp
+from pybtp.types import Perm, MeshVals
+import re
+import time
+from ptsprojects.stack import get_stack
+from time import sleep
+
+# MMDL ATS ver. 1.0
+
+log = logging.debug
+
+
+def hdl_pending_mmdl_wids(wid, test_case_name, description):
+    log("%s, %r, %r, %s", hdl_pending_mmdl_wids.__name__, wid, description,
+        test_case_name)
+    stack = get_stack()
+    module = sys.modules[__name__]
+
+    actions = stack.synch.perform_synch(wid, test_case_name, description)
+    if not actions:
+        return "WAIT"
+
+    for action in actions:
+        handler = getattr(module, "hdl_wid_%d" % action.wid)
+        result = handler(action.description)
+        stack.synch.prepare_pending_response(action.test_case,
+                                             result, action.delay)
+
+    return None
+
+
+def mmdl_wid_hdl(wid, description, test_case_name):
+    log("%s, %r, %r, %s", mmdl_wid_hdl.__name__, wid, description,
+        test_case_name)
+    module = sys.modules[__name__]
+
+    try:
+        handler = getattr(module, "hdl_wid_%d" % wid)
+
+        stack = get_stack()
+        if not stack.synch or not stack.synch.is_required_synch(test_case_name, wid):
+            return handler(description)
+
+        response = hdl_pending_mmdl_wids(wid, test_case_name, description)
+
+        if response == "WAIT":
+            return response
+
+        stack.synch.set_pending_responses_if_any()
+        return "WAIT"
+
+    except AttributeError as e:
+        logging.exception(e.message)
+
+
+def iut_reset():
+    # Wait a few seconds before resetting so that all settings are stored on the flash
+    # Some models save from a callback that is triggered after a few seconds.
+    time.sleep(7)
+    zephyrctl = btp.get_iut_method()
+
+    zephyrctl.wait_iut_ready_event()
+    btp.core_reg_svc_gap()
+    btp.core_reg_svc_mesh()
+    btp.gap_read_ctrl_info()
+    btp.mesh_init()
+
+    # Wait a few seconds so that Mesh is initialized and everything is loaded from flash
+    time.sleep(5)
+
+
+def hdl_wid_13(desc):
+    """
+    Implements: RE_PROVISIONING_PROVISIONER
+    :param desc: There is no shared security information. Please remove any
+                 security information if any. PTS is waiting for beacon to
+                 start provisioning from
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.is_initialized:
+        btp.mesh_config_prov()
+        btp.mesh_init()
+
+    if stack.mesh.is_provisioned.data:
+        # Wait a few seconds so that Mesh is initialized and everything is loaded from flash
+        time.sleep(7)
+        btp.mesh_reset()
+        time.sleep(5)
+
+    return True
+
+
+def hdl_wid_523(desc):
+    """
+    MMDL/SR/LLC/BV-07-C
+
+    :param desc: Please change IUT's Light LC Occupancy state to 1, simulating that occupancy has been reported by occupancy sensors.
+    """
+    return True
+
+
+def hdl_wid_525(desc):
+    """
+    MMDL/SR/LLC/BV-08-C
+
+    :param desc: Please change the IUT's Light LC Property states are set
+                 such that the transitions of the Light LC Light OnOff state
+                 are immediate by default (transition time of zero).
+    """
+    return True
+
+
+def hdl_wid_630(desc):
+    iut_reset()
+    return True
+
+
+def hdl_wid_631(desc):
+    iut_reset()
+    return True
+
+
+def hdl_wid_652(desc):
+    """
+    Implements: CONFIRM_GENERIC
+    :param desc: Please confirm the %s = %s.
+    :return:
+    """
+    # TODO: Confirm composition data
+    return True
+
+
+def parse_params(desc):
+    field_dict = {}
+    txt = desc.splitlines()[1:]
+    for line in txt:
+        line = line.strip()
+        fields = line.split(': ', 1)
+        if len(fields) < 2:
+            continue
+        field_name = fields[0]
+        m = re.search(r"\[([\-A-Fa-f0-9x\(\) ]+)\]", fields[1])
+        if not m:
+            field_dict[field_name] = None
+            continue
+        value = m.group(1)
+
+        m = re.search(r"\(([A-Fa-f0-9x]+)\)", value)
+        if not m:
+            field_dict[field_name] = int(value, 16)
+            continue
+
+        hex_value = m.group(1)
+        field_dict[field_name] = int(hex_value, 16)
+
+    return field_dict
+
+
+def gen_onoff_get(params):
+    btp.mmdl_gen_onoff_get()
+    return True
+
+
+def gen_onoff_set(params, ack):
+    onoff = params['OnOff']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_gen_onoff_set(onoff, tt, delay, ack=ack)
+    return True
+
+
+def gen_onoff_set_ack(params):
+    return gen_onoff_set(params, ack=True)
+
+
+def gen_onoff_set_unack(params):
+    return gen_onoff_set(params, ack=False)
+
+
+def gen_onoff_status(params):
+    return True
+
+
+def gen_lvl_get(params):
+    btp.mmdl_gen_lvl_get()
+    return True
+
+
+def gen_lvl_set(params, ack):
+    lvl = params['Level']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_gen_lvl_set(lvl, tt, delay, ack=ack)
+    return True
+
+
+def gen_lvl_set_ack(params):
+    return gen_lvl_set(params, ack=True)
+
+
+def gen_lvl_set_unack(params):
+    return gen_lvl_set(params, ack=False)
+
+
+def gen_lvl_delta_set(params, ack):
+    lvl = params['Delta Level']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_gen_lvl_delta_set(lvl, tt, delay, ack=ack)
+    return True
+
+
+def gen_lvl_set_delta_ack(params):
+    return gen_lvl_delta_set(params, ack=True)
+
+
+def gen_lvl_set_delta_unack(params):
+    return gen_lvl_delta_set(params, ack=False)
+
+
+def gen_lvl_move_set(params, ack):
+    lvl = params['Delta Level Move']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_gen_lvl_move_set(lvl, tt, delay, ack=ack)
+    return True
+
+
+def gen_lvl_set_move_ack(params):
+    return gen_lvl_move_set(params, ack=True)
+
+
+def gen_lvl_set_move_unack(params):
+    return gen_lvl_move_set(params, ack=False)
+
+
+def gen_lvl_status(params):
+    return True
+
+
+def gen_dtt_get(params):
+    btp.mmdl_gen_dtt_get()
+    return True
+
+
+def gen_dtt_set(params, ack):
+    tt = params['Transition Time']
+    btp.mmdl_gen_dtt_set(tt, ack=ack)
+    return True
+
+
+def gen_dtt_set_ack(params):
+    return gen_dtt_set(params, ack=True)
+
+
+def gen_dtt_set_unack(params):
+    return gen_dtt_set(params, ack=False)
+
+
+def gen_dtt_status(params):
+    return True
+
+
+def gen_ponoff_get(params):
+    btp.mmdl_gen_ponoff_get()
+    return True
+
+
+def gen_ponoff_set(params, ack):
+    on_power_up = params['OnPowerUp']
+    btp.mmdl_gen_ponoff_set(on_power_up, ack=ack)
+    return True
+
+
+def gen_ponoff_set_ack(params):
+    return gen_ponoff_set(params, ack=True)
+
+
+def gen_ponoff_set_unack(params):
+    return gen_ponoff_set(params, ack=False)
+
+
+def gen_ponoff_status(params):
+    return True
+
+
+def gen_plvl_get(params):
+    btp.mmdl_gen_plvl_get()
+    return True
+
+
+def gen_plvl_set(params, ack):
+    power_level = params['Present Power']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_gen_plvl_set(power_level, tt, delay, ack=ack)
+    return True
+
+
+def gen_plvl_set_ack(params):
+    return gen_plvl_set(params, ack=True)
+
+
+def gen_plvl_set_unack(params):
+    return gen_plvl_set(params, ack=False)
+
+
+def gen_plvl_status(params):
+    return True
+
+
+def gen_plvl_dflt_get(params):
+    btp.mmdl_gen_plvl_dflt_get()
+    return True
+
+
+def gen_plvl_last_get(params):
+    btp.mmdl_gen_plvl_last_get()
+    return True
+
+
+def gen_plvl_last_status(params):
+    return True
+
+
+def gen_plvl_dflt_set(params, ack):
+    power_default = params['Power Default']
+    btp.mmdl_gen_plvl_dflt_set(power_default, ack=ack)
+    return True
+
+
+def gen_plvl_dflt_set_ack(params):
+    return gen_plvl_dflt_set(params, ack=True)
+
+
+def gen_plvl_dflt_set_unack(params):
+    return gen_plvl_dflt_set(params, ack=False)
+
+
+def gen_plvl_dflt_status(params):
+    return True
+
+
+def gen_plvl_range_get(params):
+    btp.mmdl_gen_plvl_range_get()
+    return True
+
+
+def gen_plvl_range_set(params, ack):
+    range_min = params['Range Min']
+    range_max = params['Range Max']
+    btp.mmdl_gen_plvl_range_set(range_min, range_max, ack=ack)
+    return True
+
+
+def gen_plvl_range_set_ack(params):
+    return gen_plvl_range_set(params, ack=True)
+
+
+def gen_plvl_range_set_unack(params):
+    return gen_plvl_range_set(params, ack=False)
+
+
+def gen_plvl_range_status(params):
+    return True
+
+
+def gen_battery_get(params):
+    btp.mmdl_gen_battery_get()
+    return True
+
+
+def gen_battery_status(params):
+    return True
+
+
+def gen_loc_global_get(params):
+    btp.mmdl_gen_loc_global_get()
+    return True
+
+def gen_loc_global_set(params, ack):
+    lat = params['Global Latitude']
+    lon = params['Global Longitude']
+    alt = params['Global Altitude']
+
+    btp.mmdl_gen_loc_global_set(lat, lon, alt, ack)
+    return True
+
+
+def gen_loc_global_set_ack(params):
+    return gen_loc_global_set(params, True)
+
+
+def gen_loc_global_set_unack(params):
+    return gen_loc_global_set(params, False)
+
+
+def gen_loc_global_status(params):
+    return True
+
+
+def gen_loc_local_get(params):
+    btp.mmdl_gen_loc_local_get()
+    return True
+
+
+def gen_loc_local_set(params, ack):
+    north = params['Local North']
+    east = params['Local East']
+    alt = params['Local Altitude']
+    floor = params['Floor']
+    location_uncert = params['Location Uncertainty']
+
+    btp.mmdl_gen_loc_local_set(north, east, alt, floor, location_uncert, ack)
+    return True
+
+
+def gen_loc_local_set_ack(params):
+    return gen_loc_local_set(params, True)
+
+
+def gen_loc_local_set_unack(params):
+    return gen_loc_local_set(params, False)
+
+
+def gen_loc_local_status(params):
+    return True
+
+
+def gen_mfr_props_get(params):
+    btp.mmdl_gen_props_get(kind=0x00)
+    return True
+
+
+def gen_mfr_props_status(params):
+    return True
+
+
+def gen_mfr_prop_get(params):
+    id = params['Property ID']
+    btp.mmdl_gen_prop_get(kind=0x00, prop_id=id)
+    return True
+
+def gen_mfr_prop_set(params, ack):
+    prop_id = params['Property ID']
+    access = params.get('Access', 3)
+    btp.mmdl_gen_prop_set(0x00, prop_id, access, '', ack)
+    return True
+
+
+def gen_mfr_prop_set_ack(params):
+    return gen_mfr_prop_set(params, ack=True)
+
+
+def gen_mfr_prop_set_unack(params):
+    return gen_mfr_prop_set(params, ack=False)
+
+
+def gen_mfr_prop_status(params):
+    return True
+
+
+def gen_admin_props_get(params):
+    btp.mmdl_gen_props_get(kind=0x01)
+    return True
+
+
+def gen_admin_props_status(params):
+    return True
+
+
+def gen_admin_prop_get(params):
+    id = params['Property ID']
+    btp.mmdl_gen_prop_get(kind=0x01, prop_id=id)
+    return True
+
+
+def gen_admin_prop_set(params, ack):
+    prop_id = params['Property ID']
+    val = params['Property Value']
+    access = params.get('Access', 3)
+    payload = hex(val)[2:]
+    btp.mmdl_gen_prop_set(0x01, prop_id, access, payload, ack)
+    return True
+
+
+def gen_admin_prop_set_ack(params):
+    return gen_admin_prop_set(params, ack=True)
+
+
+def gen_admin_prop_set_unack(params):
+    return gen_admin_prop_set(params, ack=False)
+
+
+def gen_admin_prop_status(params):
+    return True
+
+
+def gen_usr_props_get(params):
+    btp.mmdl_gen_props_get(kind=0x02)
+    return True
+
+
+def gen_usr_prop_set(params, ack):
+    prop_id = params['Property ID']
+    val = params['Property Value']
+    access = params.get('Access', 3)
+    payload = hex(val)[2:]
+    btp.mmdl_gen_prop_set(0x02, prop_id, access, payload, ack)
+    return True
+
+
+def gen_usr_prop_set_ack(params):
+    return gen_usr_prop_set(params, ack=True)
+
+
+def gen_usr_prop_set_unack(params):
+    return gen_usr_prop_set(params, ack=False)
+
+
+def gen_usr_props_status(params):
+    return True
+
+
+def gen_usr_prop_get(params):
+    id = params['Property ID']
+    btp.mmdl_gen_prop_get(kind=0x02, prop_id=id)
+    return True
+
+
+def gen_usr_prop_status(params):
+    return True
+
+
+def gen_cli_props_get(params):
+    id = params['Property ID']
+    btp.mmdl_gen_props_get(kind=0x03, prop_id=id)
+    return True
+
+
+def gen_cli_props_status(params):
+    return True
+
+
+def sensor_desc_get(params):
+    if 'PropertyId' in params:
+        sensor_id = 0x0042
+    else:
+        sensor_id = None
+    btp.mmdl_sensor_desc_get(sensor_id)
+    return True
+
+
+def sensor_desc_status(params):
+    return True
+
+
+def sensor_get(params):
+    if 'PropertyId' in params:
+        sensor_id = 0x0042
+    else:
+        sensor_id = None
+    btp.mmdl_sensor_get(sensor_id)
+    return True
+
+
+def sensor_status(params):
+    return True
+
+
+def sensor_cadence_get(params):
+    sensor_id = 0x0042
+    btp.mmdl_sensor_cadence_get(sensor_id)
+    return True
+
+def sensor_cadence_set(params, ack):
+    sensor_id = 0x0042
+    cadence_data = "0100a00100a0"
+    btp.mmdl_sensor_cadence_set(sensor_id, cadence_data, ack=ack)
+    return True
+
+
+def sensor_cadence_set_ack(params):
+    return sensor_cadence_set(params, True)
+
+
+def sensor_cadence_set_unack(params):
+    return sensor_cadence_set(params, False)
+
+
+def sensor_cadence_status(params):
+    return True
+
+
+def sensor_settings_get(params):
+    sensor_id = 0x0042
+    btp.mmdl_sensor_settings_get(sensor_id)
+    return True
+
+
+def sensor_settings_status(params):
+    return True
+
+
+def sensor_setting_get(params):
+    sensor_id = 0x0042
+    setting_id = 0x2001
+    btp.mmdl_sensor_setting_get(sensor_id, setting_id)
+    return True
+
+def sensor_setting_set(params, ack):
+    sensor_id = 0x0042
+    setting_id = 0x2001
+    setting_raw = '0123'
+    btp.mmdl_sensor_setting_set(sensor_id, setting_id, setting_raw, ack)
+    return True
+
+
+def sensor_setting_set_ack(params):
+    return sensor_setting_set(params, True)
+
+
+def sensor_setting_set_unack(params):
+    return sensor_setting_set(params, False)
+
+
+def sensor_setting_status(params):
+    return True
+
+
+def sensor_column_get(params):
+    sensor_id = 0x0042
+    raw_value = '10'
+    btp.mmdl_sensor_column_get(sensor_id, raw_value)
+    return True
+
+
+def sensor_column_status(params):
+    return True
+
+
+def sensor_series_get(params):
+    sensor_id = params['PropertyId']
+    raw_value_x1 = hex(params['RawValueX1'])[2:]
+    raw_value_x2 = hex(params['RawValueX2'])[2:]
+    btp.mmdl_sensor_series_get(sensor_id, raw_value_x1 + raw_value_x2)
+    return True
+
+
+def sensor_series_status(params):
+    return True
+
+
+ZONE_CHANGE_ZERO_POINT = 0x40
+UTC_CHANGE_ZERO_POINT = 0x00FF
+
+def time_get(params):
+    btp.mmdl_time_get()
+    return True
+
+
+def time_set(params):
+    tai = params['TAI Seconds']
+    subsecond = params['Subsecond']
+    uncertainty = params['Uncertainty']
+    auth = params['Time Authority']
+    tai_utc_delta = auth | ((params['TAI-UTC Delta']) << 1)
+    time_zone_offset = params['Time Zone Offset']
+    btp.mmdl_time_set(tai, subsecond, uncertainty, tai_utc_delta, time_zone_offset)
+    return True
+
+
+def time_status(params):
+    return True
+
+
+def time_role_get(params):
+    btp.mmdl_time_role_get()
+    return True
+
+
+def time_role_set(params):
+    role = params['Time Role']
+    btp.mmdl_time_role_set(role)
+    return True
+
+
+def time_role_status(params):
+    return True
+
+
+def time_zone_get(params):
+    btp.mmdl_time_zone_get()
+    return True
+
+
+def time_zone_set(params):
+    new_offset = params['Time Zone Offset New'] - ZONE_CHANGE_ZERO_POINT
+    timestamp = params['TAI of Zone Change']
+    btp.mmdl_time_zone_set(new_offset, timestamp)
+    return True
+
+
+def time_zone_status(params):
+    return True
+
+
+def time_tai_utc_delta_get(params):
+    btp.mmdl_time_tai_utc_delta_get()
+    return True
+
+
+def time_tai_utc_delta_set(params):
+    delta_new = params['TAI-UTC Delta New'] - UTC_CHANGE_ZERO_POINT
+    timestamp = params['TAI of Delta Change']
+    btp.mmdl_time_tai_utc_delta_set(delta_new, timestamp)
+    return True
+
+
+def time_tai_utc_delta_status(params):
+    return True
+
+
+def light_lightness_get(params):
+    btp.mmdl_light_lightness_get()
+    return True
+
+
+def light_lightness_set(params, ack):
+    power_level = params['Lightness']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_light_lightness_set(power_level, tt, delay, ack=ack)
+    return True
+
+
+def light_lightness_set_ack(params):
+    return light_lightness_set(params, True)
+
+
+def light_lightness_set_unack(params):
+    return light_lightness_set(params, False)
+
+
+def light_lightness_status(params):
+    return True
+
+
+def light_lightness_linear_get(params):
+    btp.mmdl_light_lightness_linear_get()
+    return True
+
+
+def light_lightness_linear_set(params, ack):
+    power_level = params['Lightness']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_light_lightness_linear_set(power_level, tt, delay, ack=ack)
+    return True
+
+
+def light_lightness_linear_set_ack(params):
+    return light_lightness_linear_set(params, True)
+
+
+def light_lightness_linear_set_unack(params):
+    return light_lightness_linear_set(params, False)
+
+
+def light_lightness_linear_status(params):
+    return True
+
+
+def light_lightness_last_get(params):
+    btp.mmdl_light_lightness_last_get()
+    return True
+
+
+def light_lightness_last_status(params):
+    return True
+
+
+def light_lightness_default_get(params):
+    btp.mmdl_light_lightness_default_get()
+    return True
+
+
+def light_lightness_default_set(params, ack):
+    dflt = params['Lightness']
+    btp.mmdl_light_lightness_default_set(dflt, ack=ack)
+    return True
+
+
+def light_lightness_default_set_ack(params):
+    return light_lightness_default_set(params, True)
+
+
+def light_lightness_default_set_unack(params):
+    return light_lightness_default_set(params, False)
+
+
+def light_lightness_default_status(params):
+    return True
+
+
+def light_lightness_range_get(params):
+    btp.mmdl_light_lightness_range_get()
+    return True
+
+
+def light_lightness_range_set(params, ack):
+    min_val = params['Range Min']
+    max_val = params['Range Max']
+    btp.mmdl_light_lightness_range_set(min_val, max_val, ack=ack)
+    return True
+
+
+def light_lightness_range_set_ack(params):
+    return light_lightness_range_set(params, True)
+
+
+def light_lightness_range_set_unack(params):
+    return light_lightness_range_set(params, False)
+
+
+def light_lightness_range_status(params):
+    return True
+
+
+def light_lc_mode_get(params):
+    btp.mmdl_light_lc_mode_get()
+    return True
+
+
+def light_lc_mode_set(params, ack):
+    mode = params['Mode']
+    btp.mmdl_light_lc_mode_set(mode, ack=ack)
+    return True
+
+
+def light_lc_mode_set_ack(params):
+    return light_lc_mode_set(params, True)
+
+
+def light_lc_mode_set_unack(params):
+    return light_lc_mode_set(params, False)
+
+
+def light_lc_mode_status(params):
+    return True
+
+
+def light_lc_occupancy_mode_get(params):
+    btp.mmdl_light_lc_occupancy_mode_get()
+    return True
+
+
+def light_lc_occupancy_mode_set(params, ack):
+    occupancy_mode = params['Occupancy Mode']
+    btp.mmdl_light_lc_occupancy_mode_set(occupancy_mode, ack=ack)
+    return True
+
+
+def light_lc_occupancy_mode_set_ack(params):
+    return light_lc_occupancy_mode_set(params, True)
+
+
+def light_lc_occupancy_mode_set_unack(params):
+    return light_lc_occupancy_mode_set(params, False)
+
+
+def light_lc_occupancy_mode_status(params):
+    return True
+
+
+def light_lc_light_onoff_mode_get(params):
+    btp.mmdl_light_lc_light_onoff_mode_get()
+    return True
+
+
+def light_lc_light_onoff_mode_set(params, ack):
+    light_onoff_mode = params['Light OnOff']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_light_lc_light_onoff_mode_set(light_onoff_mode, tt, delay, ack=ack)
+    return True
+
+
+def light_lc_light_onoff_mode_set_ack(params):
+    return light_lc_light_onoff_mode_set(params, True)
+
+
+def light_lc_light_onoff_mode_set_unack(params):
+    return light_lc_light_onoff_mode_set(params, False)
+
+
+def light_lc_light_onoff_mode_status(params):
+    return True
+
+
+def light_lc_property_get(params):
+    prop_id = params['Light LC Property ID']
+    btp.mmdl_light_lc_property_get(prop_id)
+    return True
+
+
+def light_lc_property_set(params, ack):
+    prop_id = params['Light LC Property ID']
+    prop_val = params['Light LC Property Value']
+    btp.mmdl_light_lc_property_set(prop_id, prop_val, ack=ack)
+    return True
+
+
+def light_lc_property_set_ack(params):
+    return light_lc_property_set(params, True)
+
+
+def light_lc_property_set_unack(params):
+    return light_lc_property_set(params, False)
+
+
+def light_lc_property_status(params):
+    return True
+
+
+def parse_send(params):
+    opcode = params['Op Code']
+    cmds = {
+        0x8201: gen_onoff_get,
+        0x8202: gen_onoff_set_ack,
+        0x8203: gen_onoff_set_unack,
+        0x8204: gen_onoff_status,
+        0x8205: gen_lvl_get,
+        0x8206: gen_lvl_set_ack,
+        0x8207: gen_lvl_set_unack,
+        0x8208: gen_lvl_status,
+        0x8209: gen_lvl_set_delta_ack,
+        0x820a: gen_lvl_set_delta_unack,
+        0x820b: gen_lvl_set_move_ack,
+        0x820c: gen_lvl_set_move_unack,
+        0x820d: gen_dtt_get,
+        0x820e: gen_dtt_set_ack,
+        0x820f: gen_dtt_set_unack,
+        0x8210: gen_dtt_status,
+        0x8211: gen_ponoff_get,
+        0x8213: gen_ponoff_set_ack,
+        0x8214: gen_ponoff_set_unack,
+        0x8212: gen_ponoff_status,
+        0x8215: gen_plvl_get,
+        0x8216: gen_plvl_set_ack,
+        0x8217: gen_plvl_set_unack,
+        0x8218: gen_plvl_status,
+        0x8219: gen_plvl_last_get,
+        0x821a: gen_plvl_last_status,
+        0x821b: gen_plvl_dflt_get,
+        0x821c: gen_plvl_dflt_status,
+        0x821d: gen_plvl_range_get,
+        0x821e: gen_plvl_range_status,
+        0x821f: gen_plvl_dflt_set_ack,
+        0x8220: gen_plvl_dflt_set_unack,
+        0x8221: gen_plvl_range_set_ack,
+        0x8222: gen_plvl_range_set_unack,
+        0x8223: gen_battery_get,
+        0x8224: gen_battery_status,
+        0x8225: gen_loc_global_get,
+        0x40: gen_loc_global_status,
+        0x8226: gen_loc_local_get,
+        0x8227: gen_loc_local_status,
+        0x41: gen_loc_global_set_ack,
+        0x42: gen_loc_global_set_unack,
+        0x8228: gen_loc_local_set_ack,
+        0x8229: gen_loc_local_set_unack,
+        0x822a: gen_mfr_props_get,
+        0x43: gen_mfr_props_status,
+        0x822b: gen_mfr_prop_get,
+        0x44: gen_mfr_prop_set_ack,
+        0x45: gen_mfr_prop_set_unack,
+        0x46: gen_mfr_prop_status,
+        0x822c: gen_admin_props_get,
+        0x47: gen_admin_props_status,
+        0x822d: gen_admin_prop_get,
+        0x48: gen_admin_prop_set_ack,
+        0x49: gen_admin_prop_set_unack,
+        0x4a: gen_admin_prop_status,
+        0x822e: gen_usr_props_get,
+        0x4b: gen_usr_props_status,
+        0x822f: gen_usr_prop_get,
+        0x4c: gen_usr_prop_set_ack,
+        0x4d: gen_usr_prop_set_unack,
+        0x4e: gen_usr_prop_status,
+        0x4f: gen_cli_props_get,
+        0x50: gen_cli_props_status,
+        0x8230: sensor_desc_get,
+        0x51: sensor_desc_status,
+        0x8231: sensor_get,
+        0x52: sensor_status,
+        0x8232: sensor_column_get,
+        0x53: sensor_column_status,
+        0x8233: sensor_series_get,
+        0x54: sensor_series_status,
+        0x8234: sensor_cadence_get,
+        0x55: sensor_cadence_set_ack,
+        0x56: sensor_cadence_set_unack,
+        0x57: sensor_cadence_status,
+        0x8235: sensor_settings_get,
+        0x58: sensor_settings_status,
+        0x8236: sensor_setting_get,
+        0x59: sensor_setting_set_ack,
+        0x5a: sensor_setting_set_unack,
+        0x5b: sensor_setting_status,
+        0x8237: time_get,
+        0x5c: time_set,
+        0x5d: time_status,
+        0x8238: time_role_get,
+        0x8239: time_role_set,
+        0x823a: time_role_status,
+        0x823b: time_zone_get,
+        0x823c: time_zone_set,
+        0x823d: time_zone_status,
+        0x823e: time_tai_utc_delta_get,
+        0x823f: time_tai_utc_delta_set,
+        0x8240: time_tai_utc_delta_status,
+        0x824b: light_lightness_get,
+        0x824c: light_lightness_set_ack,
+        0x824d: light_lightness_set_unack,
+        0x824e: light_lightness_status,
+        0x824f: light_lightness_linear_get,
+        0x8250: light_lightness_linear_set_ack,
+        0x8251: light_lightness_linear_set_unack,
+        0x8252: light_lightness_linear_status,
+        0x8253: light_lightness_last_get,
+        0x8254: light_lightness_last_status,
+        0x8255: light_lightness_default_get,
+        0x8256: light_lightness_default_status,
+        0x8257: light_lightness_range_get,
+        0x8258: light_lightness_range_status,
+        0x8259: light_lightness_default_set_ack,
+        0x825a: light_lightness_default_set_unack,
+        0x825b: light_lightness_range_set_ack,
+        0x825c: light_lightness_range_set_unack,
+        0x8291: light_lc_mode_get,
+        0x8292: light_lc_mode_set_ack,
+        0x8293: light_lc_mode_set_unack,
+        0x8294: light_lc_mode_status,
+        0x8295: light_lc_occupancy_mode_get,
+        0x8296: light_lc_occupancy_mode_set_ack,
+        0x8297: light_lc_occupancy_mode_set_unack,
+        0x8298: light_lc_occupancy_mode_status,
+        0x8299: light_lc_light_onoff_mode_get,
+        0x829a: light_lc_light_onoff_mode_set_ack,
+        0x829b: light_lc_light_onoff_mode_set_unack,
+        0x829c: light_lc_light_onoff_mode_status,
+        0x829d: light_lc_property_get,
+        0x62: light_lc_property_set_ack,
+        0x63: light_lc_property_set_unack,
+        0x64: light_lc_property_status,
+    }
+
+    if opcode not in cmds:
+        return False
+
+    return cmds[opcode](params)
+
+
+def parse_660_desc(desc):
+    params = parse_params(desc)
+    log("%r", params)
+    if desc.startswith('Please send') or desc.startswith('Please confirm the received'):
+        return parse_send(params)
+    elif desc.startswith('Please confirm IUT has successfully set the new state.'):
+        return True
+    else:
+        return False
+
+
+def hdl_wid_660(desc):
+    return parse_660_desc(desc)
+
+
+def hdl_wid_661(desc):
+    iut_reset()
+    return True
+
+
+def hdl_wid_663(desc):
+    iut_reset()
+    return True
+
+
+def hdl_wid_664(desc):
+    """
+    Please set the IUT's property 0x0069 outside the range (4008, BFF8).\n\nPTS will wait for Sensor Status messages being published at a new 8-second interval.
+    """
+    prop_id = re.findall(r'0x([0-9A-F]{2,})', desc)[0]
+    range_values = re.findall(r'\(([0-9A-F]{2,}), ([0-9A-F]{2,})\)', desc)[0]
+    sensor_value = int(range_values[0], 16) - 1
+    btp.mmdl_sensor_data_set(int(prop_id, 16), struct.pack("<I", sensor_value))
+    return True
+
+
+def hdl_wid_665(desc):
+    """
+    Please set the IUT's property 0x0069 inside the range (4008, BFF8).\n\nPTS will wait for Sensor Status messages being published at a new 2-second interval.
+    """
+    prop_id = re.findall(r'0x([0-9A-F]{2,})', desc)[0]
+    range_values = re.findall(r'\(([0-9A-F]{2,}), ([0-9A-F]{2,})\)', desc)[0]
+    sensor_value = int(range_values[0], 16) + 1
+    btp.mmdl_sensor_data_set(int(prop_id, 16), struct.pack("<I", sensor_value))
+    return True
+
+
+global sensor_value
+
+def hdl_wid_666(desc):
+    """
+    Please set the property 0x0069 at a convenient value that allows for future increments/decrements.
+    """
+    global sensor_value
+    # Wait a few seconds before publishing a new state to satisfy a requirement for Min Interval between published messages.
+    time.sleep(5)
+
+    prop_id = int(re.findall(r'0x([0-9A-F]{2,})', desc)[0], 16)
+    sensor_value = (0xffff / 2)
+    btp.mmdl_sensor_data_set(prop_id, struct.pack("<I", sensor_value))
+    return True
+
+
+def hdl_wid_667(desc):
+    """
+    Please increase the value of the property 0x0069 with a quantity smaller than 332C.\n\nPTS expects the IUT not to publish any message.
+    Please increase the value of the property 0x0069 with a quantity smaller than 20 percent.\n\nPTS expects the IUT not to publish any message.
+    """
+    global sensor_value
+    # Wait a few seconds before publishing a new state to satisfy a requirement for Min Interval between published messages.
+    time.sleep(5)
+
+    prop_id = int(re.findall(r'0x([0-9A-F]{2,})', desc)[0], 16)
+    if 'percent' in desc:
+        percent = int(re.findall(r'(\d+) percent.', desc)[0])
+        sensor_value = int(sensor_value * ((100.0 + (percent - 1)) / 100.0))
+    else:
+        quantity = int(re.findall(r'([0-9A-F]{2,})\.', desc)[0], 16)
+        sensor_value += (quantity - 1)
+    btp.mmdl_sensor_data_set(prop_id, struct.pack("<I", sensor_value))
+    return True
+
+
+def hdl_wid_668(desc):
+    """
+    Please increase the value of the property 0x0069 with a quantity larger than 332C.\n\nPTS expects the IUT to publish the new state.
+    Please increase the value of the property 0x0069 with a quantity larger than 20 percent.\n\nPTS expects the IUT to publish the new state.
+    """
+    global sensor_value
+    # Wait a few seconds before publishing a new state to satisfy a requirement for Min Interval between published messages.
+    time.sleep(5)
+
+    prop_id = int(re.findall(r'0x([0-9A-F]{2,})', desc)[0], 16)
+    if 'percent' in desc:
+        percent = int(re.findall(r'(\d+) percent.', desc)[0])
+        sensor_value = int(sensor_value * ((100.0 + (percent + 1)) / 100.0))
+    else:
+        quantity = int(re.findall(r'([0-9A-F]{2,})\.', desc)[0], 16)
+        sensor_value += (quantity + 1)
+
+    btp.mmdl_sensor_data_set(prop_id, struct.pack("<I", sensor_value))
+    return True
+
+
+def hdl_wid_669(desc):
+    """
+    Please decrease the value of the property 0x0069 with a quantity smaller than 332C.\n\nPTS expects the IUT not to publish any message.
+    Please decrease the value of the property 0x0069 with a quantity smaller than 20 percent.\n\nPTS expects the IUT not to publish any message.
+    """
+    global sensor_value
+    # Wait a few seconds before publishing a new state to satisfy a requirement for Min Interval between published messages.
+    time.sleep(5)
+
+    prop_id = int(re.findall(r'0x([0-9A-F]{2,})', desc)[0], 16)
+    if 'percent' in desc:
+        percent = int(re.findall(r'(\d+) percent.', desc)[0])
+        sensor_value = int(sensor_value * ((100.0 - (percent - 1)) / 100.0))
+    else:
+        quantity = int(re.findall(r'([0-9A-F]{2,})\.', desc)[0], 16)
+        sensor_value -= (quantity - 1)
+    btp.mmdl_sensor_data_set(prop_id, struct.pack("<I", sensor_value))
+    return True
+
+
+def hdl_wid_670(desc):
+    """
+    Please decrease the value of the property 0x0069 with a quantity larger than 332C.\n\nPTS expects the IUT to publish the new state.
+    """
+    global sensor_value
+    # Wait a few seconds before publishing a new state to satisfy a requirement for Min Interval between published messages.
+    time.sleep(5)
+
+    prop_id = int(re.findall(r'0x([0-9A-F]{2,})', desc)[0], 16)
+    if 'percent' in desc:
+        percent = int(re.findall(r'(\d+) percent.', desc)[0])
+        sensor_value = int(sensor_value * ((100.0 - (percent + 1)) / 100.0))
+    else:
+        quantity = int(re.findall(r'([0-9A-F]{2,})\.', desc)[0], 16)
+        sensor_value -= (quantity + 1)
+    btp.mmdl_sensor_data_set(prop_id, struct.pack("<I", sensor_value))
+    return True

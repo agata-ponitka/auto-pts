@@ -66,6 +66,10 @@ CORE = {
                  defs.BTP_INDEX_NONE, defs.BTP_SERVICE_ID_MESH),
     "mesh_unreg": (defs.BTP_SERVICE_ID_CORE, defs.CORE_UNREGISTER_SERVICE,
                    defs.BTP_INDEX_NONE, defs.BTP_SERVICE_ID_MESH),
+    "mmdl_reg": (defs.BTP_SERVICE_ID_CORE, defs.CORE_REGISTER_SERVICE,
+                 defs.BTP_INDEX_NONE, defs.BTP_SERVICE_ID_MMDL),
+    "mmdl_unreg": (defs.BTP_SERVICE_ID_CORE, defs.CORE_UNREGISTER_SERVICE,
+                   defs.BTP_INDEX_NONE, defs.BTP_SERVICE_ID_MMDL),
     "read_supp_cmds": (defs.BTP_SERVICE_ID_CORE,
                        defs.CORE_READ_SUPPORTED_COMMANDS,
                        defs.BTP_INDEX_NONE, ""),
@@ -278,6 +282,191 @@ MESH = {
                        CONTROLLER_INDEX, ""),
 }
 
+MMDL = {
+    "read_supp_cmds": (defs.BTP_SERVICE_ID_MMDL,
+                       defs.MMDL_READ_SUPPORTED_COMMANDS,
+                       CONTROLLER_INDEX, ""),
+    "gen_onoff_get": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_GEN_ONOFF_GET,
+                      CONTROLLER_INDEX, ""),
+    "gen_onoff_set": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_GEN_ONOFF_SET,
+                      CONTROLLER_INDEX),
+    "gen_lvl_get": (defs.BTP_SERVICE_ID_MMDL,
+                    defs.MMDL_GEN_LVL_GET,
+                    CONTROLLER_INDEX, ""),
+    "gen_lvl_set": (defs.BTP_SERVICE_ID_MMDL,
+                    defs.MMDL_GEN_LVL_SET,
+                    CONTROLLER_INDEX),
+    "gen_lvl_delta_set": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_GEN_LVL_DELTA_SET,
+                          CONTROLLER_INDEX),
+    "gen_lvl_move_set": (defs.BTP_SERVICE_ID_MMDL,
+                         defs.MMDL_GEN_LVL_MOVE_SET,
+                         CONTROLLER_INDEX),
+    "gen_dtt_get": (defs.BTP_SERVICE_ID_MMDL,
+                    defs.MMDL_GEN_DTT_GET,
+                    CONTROLLER_INDEX, ""),
+    "gen_dtt_set": (defs.BTP_SERVICE_ID_MMDL,
+                    defs.MMDL_GEN_DTT_SET,
+                    CONTROLLER_INDEX),
+    "gen_ponoff_get": (defs.BTP_SERVICE_ID_MMDL,
+                       defs.MMDL_GEN_PONOFF_GET,
+                       CONTROLLER_INDEX, ""),
+    "gen_ponoff_set": (defs.BTP_SERVICE_ID_MMDL,
+                       defs.MMDL_GEN_PONOFF_SET,
+                       CONTROLLER_INDEX),
+    "gen_plvl_get": (defs.BTP_SERVICE_ID_MMDL,
+                     defs.MMDL_GEN_PLVL_GET,
+                     CONTROLLER_INDEX, ""),
+    "gen_plvl_set": (defs.BTP_SERVICE_ID_MMDL,
+                     defs.MMDL_GEN_PLVL_SET,
+                     CONTROLLER_INDEX),
+    "gen_plvl_last_get": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_GEN_PLVL_LAST_GET,
+                          CONTROLLER_INDEX, ""),
+    "gen_plvl_dflt_get": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_GEN_PLVL_DFLT_GET,
+                          CONTROLLER_INDEX, ""),
+    "gen_plvl_range_get": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_GEN_PLVL_RANGE_GET,
+                           CONTROLLER_INDEX, ""),
+    "gen_plvl_dflt_set": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_GEN_PLVL_DFLT_SET,
+                          CONTROLLER_INDEX),
+    "gen_plvl_range_set": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_GEN_PLVL_RANGE_SET,
+                           CONTROLLER_INDEX),
+    "gen_battery_get": (defs.BTP_SERVICE_ID_MMDL,
+                        defs.MMDL_GEN_BATTERY_GET,
+                        CONTROLLER_INDEX, ""),
+    "gen_loc_global_get": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_GEN_LOC_GLOBAL_GET,
+                           CONTROLLER_INDEX, ""),
+    "gen_loc_local_get": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_GEN_LOC_LOCAL_GET,
+                          CONTROLLER_INDEX, ""),
+    "gen_loc_global_set": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_GEN_LOC_GLOBAL_SET,
+                           CONTROLLER_INDEX),
+    "gen_loc_local_set": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_GEN_LOC_LOCAL_SET,
+                          CONTROLLER_INDEX),
+    "gen_props_get": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_GEN_PROPS_GET,
+                      CONTROLLER_INDEX),
+    "gen_prop_get": (defs.BTP_SERVICE_ID_MMDL,
+                     defs.MMDL_GEN_PROP_GET,
+                     CONTROLLER_INDEX),
+    "gen_prop_set": (defs.BTP_SERVICE_ID_MMDL,
+                     defs.MMDL_GEN_PROP_SET,
+                     CONTROLLER_INDEX),
+    "sensor_desc_get": (defs.BTP_SERVICE_ID_MMDL,
+                        defs.MMDL_SENSOR_DESC_GET,
+                        CONTROLLER_INDEX),
+    "sensor_get": (defs.BTP_SERVICE_ID_MMDL,
+                   defs.MMDL_SENSOR_GET,
+                   CONTROLLER_INDEX),
+    "sensor_column_get": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_SENSOR_COLUMN_GET,
+                          CONTROLLER_INDEX),
+    "sensor_series_get": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_SENSOR_SERIES_GET,
+                          CONTROLLER_INDEX),
+    "sensor_cadence_get": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_SENSOR_CADENCE_GET,
+                           CONTROLLER_INDEX),
+    "sensor_cadence_set": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_SENSOR_CADENCE_SET,
+                           CONTROLLER_INDEX),
+    "sensor_settings_get": (defs.BTP_SERVICE_ID_MMDL,
+                            defs.MMDL_SENSOR_SETTINGS_GET,
+                            CONTROLLER_INDEX),
+    "sensor_setting_get": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_SENSOR_SETTING_GET,
+                           CONTROLLER_INDEX),
+    "sensor_setting_set": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_SENSOR_SETTING_SET,
+                           CONTROLLER_INDEX),
+    "time_get": (defs.BTP_SERVICE_ID_MMDL,
+                 defs.MMDL_TIME_GET,
+                 CONTROLLER_INDEX, ""),
+    "time_set": (defs.BTP_SERVICE_ID_MMDL,
+                 defs.MMDL_TIME_SET,
+                 CONTROLLER_INDEX),
+    "time_role_get": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_TIME_ROLE_GET,
+                      CONTROLLER_INDEX, ""),
+    "time_role_set": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_TIME_ROLE_SET,
+                      CONTROLLER_INDEX),
+    "time_zone_get": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_TIME_ZONE_GET,
+                      CONTROLLER_INDEX, ""),
+    "time_zone_set": (defs.BTP_SERVICE_ID_MMDL,
+                      defs.MMDL_TIME_ZONE_SET,
+                      CONTROLLER_INDEX),
+    "time_tai_utc_delta_get": (defs.BTP_SERVICE_ID_MMDL,
+                               defs.MMDL_TIME_TAI_UTC_DELTA_GET,
+                               CONTROLLER_INDEX, ""),
+    "time_tai_utc_delta_set": (defs.BTP_SERVICE_ID_MMDL,
+                               defs.MMDL_TIME_TAI_UTC_DELTA_SET,
+                               CONTROLLER_INDEX),
+    "light_lightness_get": (defs.BTP_SERVICE_ID_MMDL,
+                            defs.MMDL_LIGHT_LIGHTNESS_GET,
+                            CONTROLLER_INDEX, ""),
+    "light_lightness_set": (defs.BTP_SERVICE_ID_MMDL,
+                            defs.MMDL_LIGHT_LIGHTNESS_SET,
+                            CONTROLLER_INDEX),
+    "light_lightness_linear_get": (defs.BTP_SERVICE_ID_MMDL,
+                                   defs.MMDL_LIGHT_LIGHTNESS_LINEAR_GET,
+                                   CONTROLLER_INDEX, ""),
+    "light_lightness_linear_set": (defs.BTP_SERVICE_ID_MMDL,
+                                   defs.MMDL_LIGHT_LIGHTNESS_LINEAR_SET,
+                                   CONTROLLER_INDEX),
+    "light_lightness_last_get": (defs.BTP_SERVICE_ID_MMDL,
+                                 defs.MMDL_LIGHT_LIGHTNESS_LAST_GET,
+                                 CONTROLLER_INDEX, ""),
+    "light_lightness_default_get": (defs.BTP_SERVICE_ID_MMDL,
+                                    defs.MMDL_LIGHT_LIGHTNESS_DEFAULT_GET,
+                                    CONTROLLER_INDEX, ""),
+    "light_lightness_default_set": (defs.BTP_SERVICE_ID_MMDL,
+                                    defs.MMDL_LIGHT_LIGHTNESS_DEFAULT_SET,
+                                    CONTROLLER_INDEX),
+    "light_lightness_range_get": (defs.BTP_SERVICE_ID_MMDL,
+                                  defs.MMDL_LIGHT_LIGHTNESS_RANGE_GET,
+                                  CONTROLLER_INDEX, ""),
+    "light_lightness_range_set": (defs.BTP_SERVICE_ID_MMDL,
+                                  defs.MMDL_LIGHT_LIGHTNESS_RANGE_SET,
+                                  CONTROLLER_INDEX),
+    "light_lc_mode_get": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_LIGHT_LC_MODE_GET,
+                          CONTROLLER_INDEX, ""),
+    "light_lc_mode_set": (defs.BTP_SERVICE_ID_MMDL,
+                          defs.MMDL_LIGHT_LC_MODE_SET,
+                          CONTROLLER_INDEX),
+    "light_lc_occupancy_mode_get": (defs.BTP_SERVICE_ID_MMDL,
+                                    defs.MMDL_LIGHT_LC_OCCUPANCY_MODE_GET,
+                                    CONTROLLER_INDEX, ""),
+    "light_lc_occupancy_mode_set": (defs.BTP_SERVICE_ID_MMDL,
+                                    defs.MMDL_LIGHT_LC_OCCUPANCY_MODE_SET,
+                                    CONTROLLER_INDEX),
+    "light_lc_light_onoff_mode_get": (defs.BTP_SERVICE_ID_MMDL,
+                                    defs.MMDL_LIGHT_LC_LIGHT_ONOFF_MODE_GET,
+                                    CONTROLLER_INDEX, ""),
+    "light_lc_light_onoff_mode_set": (defs.BTP_SERVICE_ID_MMDL,
+                                    defs.MMDL_LIGHT_LC_LIGHT_ONOFF_MODE_SET,
+                                    CONTROLLER_INDEX),
+    "light_lc_property_get": (defs.BTP_SERVICE_ID_MMDL,
+                              defs.MMDL_LIGHT_LC_PROPERTY_GET,
+                              CONTROLLER_INDEX),
+    "light_lc_property_set": (defs.BTP_SERVICE_ID_MMDL,
+                              defs.MMDL_LIGHT_LC_PROPERTY_SET,
+                              CONTROLLER_INDEX),
+    "sensor_data_set": (defs.BTP_SERVICE_ID_MMDL,
+                        defs.MMDL_SENSOR_DATA_SET,
+                        CONTROLLER_INDEX),
+}
 
 def verify_description(description):
     """A function to verify that values are in PTS MMI description
@@ -507,6 +696,22 @@ def core_unreg_svc_mesh():
 
     iutctl = get_iut()
     iutctl.btp_socket.send_wait_rsp(*CORE['mesh_unreg'])
+
+
+def core_reg_svc_mmdl():
+    logging.debug("%s", core_reg_svc_mmdl.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send(*CORE['mmdl_reg'])
+
+    core_reg_svc_rsp_succ()
+
+
+def core_unreg_svc_mmdl():
+    logging.debug("%s", core_unreg_svc_mmdl.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*CORE['mmdl_unreg'])
 
 
 def core_reg_svc_rsp_succ():
@@ -3581,6 +3786,570 @@ MESH_EV = {
 }
 
 
+def mmdl_gen_onoff_get():
+    logging.debug("%s", mmdl_gen_onoff_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_onoff_get'])
+
+
+def mmdl_gen_onoff_set(onoff, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_gen_onoff_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BB", ack, onoff))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_onoff_set'], data=data)
+
+
+def mmdl_gen_lvl_get():
+    logging.debug("%s", mmdl_gen_lvl_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_get'])
+
+
+def mmdl_gen_lvl_set(lvl, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_gen_lvl_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<Bh", ack, lvl))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_set'], data=data)
+
+
+def mmdl_gen_lvl_delta_set(delta, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_gen_lvl_delta_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<Bi", ack, delta))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_delta_set'], data=data)
+
+
+def mmdl_gen_lvl_move_set(move, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_gen_lvl_move_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<Bh", ack, move))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_move_set'], data=data)
+
+
+def mmdl_gen_dtt_get():
+    logging.debug("%s", mmdl_gen_dtt_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_dtt_get'])
+
+
+def mmdl_gen_dtt_set(tt, ack=True):
+    logging.debug("%s", mmdl_gen_dtt_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BB", ack, tt))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_dtt_set'], data=data)
+
+
+def mmdl_gen_ponoff_get():
+    logging.debug("%s", mmdl_gen_ponoff_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_ponoff_get'])
+
+
+def mmdl_gen_ponoff_set(on_power_up, ack=True):
+    logging.debug("%s", mmdl_gen_ponoff_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BB", ack, on_power_up))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_ponoff_set'], data=data)
+
+
+def mmdl_gen_plvl_get():
+    logging.debug("%s", mmdl_gen_plvl_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_get'])
+
+
+def mmdl_gen_plvl_set(power_lvl, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_gen_plvl_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, power_lvl))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_set'], data=data)
+
+
+def mmdl_gen_plvl_last_get():
+    logging.debug("%s", mmdl_gen_plvl_last_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_last_get'])
+
+
+def mmdl_gen_plvl_dflt_get():
+    logging.debug("%s", mmdl_gen_plvl_dflt_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_dflt_get'])
+
+
+def mmdl_gen_plvl_dflt_set(dflt, ack=True):
+    logging.debug("%s", mmdl_gen_plvl_dflt_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, dflt))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_dflt_set'], data=data)
+
+
+def mmdl_gen_plvl_range_get():
+    logging.debug("%s", mmdl_gen_plvl_range_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_range_get'])
+
+
+def mmdl_gen_plvl_range_set(range_min, range_max, ack=True):
+    logging.debug("%s", mmdl_gen_plvl_range_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHH", ack, range_min, range_max))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_range_set'], data=data)
+
+
+def mmdl_gen_battery_get():
+    logging.debug("%s", mmdl_gen_battery_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_battery_get'])
+
+
+def mmdl_gen_loc_global_get():
+    logging.debug("%s", mmdl_gen_loc_global_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_loc_global_get'])
+
+
+def mmdl_gen_loc_local_get():
+    logging.debug("%s", mmdl_gen_loc_local_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_loc_local_get'])
+
+
+def mmdl_gen_loc_global_set(lat, lon, alt, ack=True):
+    logging.debug("%s", mmdl_gen_loc_global_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BIIH", ack, lat, lon, alt))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_loc_global_set'], data=data)
+
+def mmdl_gen_loc_local_set(north, east, alt, floor, location_uncert, ack=True):
+    logging.debug("%s", mmdl_gen_loc_local_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHHHBH", ack, north, east, alt, floor, location_uncert))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_loc_local_set'], data=data)
+
+def mmdl_gen_props_get(kind, prop_id=0):
+    logging.debug("%s", mmdl_gen_props_get.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", kind, prop_id))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_props_get'], data=data)
+
+
+def mmdl_gen_prop_get(kind, prop_id):
+    logging.debug("%s", mmdl_gen_prop_get.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", kind, prop_id))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_prop_get'], data=data)
+
+
+def mmdl_gen_prop_set(kind, prop_id, access, payload, ack=True):
+    logging.debug("%s", mmdl_gen_prop_set.__name__)
+
+    payload = binascii.unhexlify(payload)
+    payload_len = len(payload)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BBHBB", ack, kind, prop_id, access, payload_len))
+    data.extend(payload)
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['gen_prop_set'], data=data)
+
+
+def mmdl_sensor_desc_get(sensor_id=None):
+    logging.debug("%s", mmdl_sensor_desc_get.__name__)
+
+    iutctl = get_iut()
+    if sensor_id:
+        data = bytearray(struct.pack("<H", sensor_id))
+    else:
+        data = ""
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_desc_get'], data=data)
+
+
+def mmdl_sensor_get(sensor_id):
+    logging.debug("%s", mmdl_sensor_get.__name__)
+
+    iutctl = get_iut()
+    if sensor_id:
+        data = bytearray(struct.pack("<H", sensor_id))
+    else:
+        data = ""
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_get'], data=data)
+
+
+def mmdl_sensor_cadence_get(sensor_id):
+    logging.debug("%s", mmdl_sensor_cadence_get.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<H", sensor_id))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_cadence_get'], data=data)
+
+
+def mmdl_sensor_cadence_set(sensor_id, cadence_data, ack=True):
+    logging.debug("%s", mmdl_sensor_cadence_set.__name__)
+
+    payload = binascii.unhexlify(cadence_data)
+    payload_len = len(payload)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHH", ack, sensor_id, payload_len))
+    data.extend(payload)
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_cadence_set'], data=data)
+
+
+def mmdl_sensor_settings_get(sensor_id):
+    logging.debug("%s", mmdl_sensor_settings_get.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<H", sensor_id))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_settings_get'], data=data)
+
+
+def mmdl_sensor_setting_get(sensor_id, setting_id):
+    logging.debug("%s", mmdl_sensor_setting_get.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<HH", sensor_id, setting_id))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_setting_get'], data=data)
+
+
+def mmdl_sensor_setting_set(sensor_id, setting_id, setting_raw, ack=True):
+    logging.debug("%s", mmdl_sensor_setting_set.__name__)
+
+    payload = binascii.unhexlify(setting_raw)
+    payload_len = len(payload)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHHB", ack, sensor_id, setting_id, payload_len))
+    data.extend(payload)
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_setting_set'], data=data)
+
+
+def mmdl_sensor_column_get(sensor_id, raw_value):
+    logging.debug("%s", mmdl_sensor_column_get.__name__)
+
+    payload = binascii.unhexlify(raw_value)
+    payload_len = len(payload)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<HB", sensor_id, payload_len))
+    data.extend(payload)
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_column_get'], data=data)
+
+
+def mmdl_sensor_series_get(sensor_id, raw_values):
+    logging.debug("%s", mmdl_sensor_series_get.__name__)
+
+    payload = binascii.unhexlify(raw_values)
+    payload_len = len(payload)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<HB", sensor_id, payload_len))
+    data.extend(payload)
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_series_get'], data=data)
+
+
+def mmdl_time_get():
+    logging.debug("%s", mmdl_time_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_get'])
+
+
+def mmdl_time_set(tai, subsecond, uncertainty, tai_utc_delta, time_zone_offset):
+    logging.debug("%s", mmdl_time_set.__name__)
+
+    iutctl = get_iut()
+
+    data = bytearray(struct.pack("<IBBBHB", tai & 0xffffffff, tai >>
+                                 32, subsecond, uncertainty, tai_utc_delta, time_zone_offset))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_set'], data=data)
+
+
+def mmdl_time_role_get():
+    logging.debug("%s", mmdl_time_role_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_role_get'])
+
+
+def mmdl_time_role_set(role):
+    logging.debug("%s", mmdl_time_role_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<B", role))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_role_set'], data=data)
+
+
+def mmdl_time_zone_get():
+    logging.debug("%s", mmdl_time_zone_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_zone_get'])
+
+
+def mmdl_time_zone_set(new_offset, timestamp):
+    logging.debug("%s", mmdl_time_zone_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<hQ", new_offset, timestamp))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_zone_set'], data=data)
+
+
+def mmdl_time_tai_utc_delta_get():
+    logging.debug("%s", mmdl_time_tai_utc_delta_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_tai_utc_delta_get'])
+
+
+def mmdl_time_tai_utc_delta_set(delta_new, timestamp):
+    logging.debug("%s", mmdl_time_tai_utc_delta_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<hQ", delta_new, timestamp))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['time_tai_utc_delta_set'], data=data)
+
+
+def mmdl_light_lightness_get():
+    logging.debug("%s", mmdl_light_lightness_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_get'])
+
+
+def mmdl_light_lightness_set(lightness, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_light_lightness_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, lightness))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_set'], data=data)
+
+
+def mmdl_light_lightness_linear_get():
+    logging.debug("%s", mmdl_light_lightness_linear_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_linear_get'])
+
+
+def mmdl_light_lightness_linear_set(lightness_linear, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_light_lightness_linear_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, lightness_linear))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_linear_set'], data=data)
+
+
+def mmdl_light_lightness_last_get():
+    logging.debug("%s", mmdl_light_lightness_last_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_last_get'])
+
+
+def mmdl_light_lightness_default_get():
+    logging.debug("%s", mmdl_light_lightness_default_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_default_get'])
+
+
+def mmdl_light_lightness_default_set(dflt, ack=True):
+    logging.debug("%s", mmdl_light_lightness_default_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, dflt))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_default_set'], data=data)
+
+def mmdl_light_lightness_range_get():
+    logging.debug("%s", mmdl_light_lightness_range_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_range_get'])
+
+
+def mmdl_light_lightness_range_set(min_val, max_val, ack=True):
+    logging.debug("%s", mmdl_light_lightness_range_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHH", ack, min_val, max_val))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_range_set'], data=data)
+
+
+def mmdl_light_lc_mode_get():
+    logging.debug("%s", mmdl_light_lc_mode_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_mode_get'])
+
+
+def mmdl_light_lc_mode_set(mode, ack=True):
+    logging.debug("%s", mmdl_light_lc_mode_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BB", ack, mode))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_mode_set'], data=data)
+
+
+def mmdl_light_lc_occupancy_mode_get():
+    logging.debug("%s", mmdl_light_lc_occupancy_mode_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_occupancy_mode_get'])
+
+
+def mmdl_light_lc_occupancy_mode_set(occupancy_mode, ack=True):
+    logging.debug("%s", mmdl_light_lc_occupancy_mode_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BB", ack, occupancy_mode))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_occupancy_mode_set'], data=data)
+
+
+
+def mmdl_light_lc_light_onoff_mode_get():
+    logging.debug("%s", mmdl_light_lc_light_onoff_mode_get.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_light_onoff_mode_get'])
+
+
+def mmdl_light_lc_light_onoff_mode_set(light_onoff_mode, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_light_lc_light_onoff_mode_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BB", ack, light_onoff_mode))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_light_onoff_mode_set'], data=data)
+
+
+def mmdl_light_lc_property_get(prop_id):
+    logging.debug("%s", mmdl_light_lc_property_get.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<H", prop_id))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_property_get'], data=data)
+
+
+def mmdl_light_lc_property_set(prop_id, prop_val, ack=True):
+    logging.debug("%s", mmdl_light_lc_property_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHH", ack, prop_id, prop_val))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_property_set'], data=data)
+
+
+def mmdl_sensor_data_set(prop_id, prop_val):
+    logging.debug("%s", mmdl_sensor_data_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<HH", prop_id, prop_val))
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_property_set'], data=data)
+
+
+def mmdl_sensor_data_set(sensor_id, raw_values):
+    logging.debug("%s", mmdl_sensor_data_set.__name__)
+
+    payload_len = len(raw_values)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<HB", sensor_id, payload_len))
+    data.extend(raw_values)
+
+    iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_data_set'], data=data)
+
+
 def event_handler(hdr, data):
     logging.debug("%s %r %r", event_handler.__name__, hdr, data)
 
@@ -3618,6 +4387,9 @@ def event_handler(hdr, data):
     # TODO: Raise BTP error instead of logging
     logging.error("Unhandled event! svc_id %s op %s", hdr.svc_id, hdr.op)
     return False
+
+def get_iut_method():
+    return get_iut()
 
 
 def init(get_iut_method):
