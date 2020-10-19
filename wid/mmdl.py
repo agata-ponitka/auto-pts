@@ -1225,3 +1225,7 @@ def hdl_wid_670(desc):
         sensor_value -= (quantity + 1)
     btp.mmdl_sensor_data_set(prop_id, struct.pack("<I", sensor_value))
     return True
+
+
+def hdl_wid_671(desc):
+    return True
