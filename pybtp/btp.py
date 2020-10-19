@@ -280,6 +280,9 @@ MESH = {
     "proxy_identity": (defs.BTP_SERVICE_ID_MESH,
                        defs.MESH_PROXY_IDENTITY,
                        CONTROLLER_INDEX, ""),
+    "prov_enable": (defs.BTP_SERVICE_ID_MESH,
+                       defs.MESH_PROV_ENABLE,
+                       CONTROLLER_INDEX, ""),
 }
 
 MMDL = {
@@ -3667,6 +3670,12 @@ def mesh_proxy_identity():
 
     iutctl = get_iut()
     iutctl.btp_socket.send_wait_rsp(*MESH['proxy_identity'])
+
+def mesh_prov_enable():
+    logging.debug("%s", mesh_prov_enable.__name__)
+
+    iutctl = get_iut()
+    iutctl.btp_socket.send_wait_rsp(*MESH['prov_enable'])
 
 
 def mesh_out_number_action_ev(mesh, data, data_len):

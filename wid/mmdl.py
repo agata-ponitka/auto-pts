@@ -100,12 +100,14 @@ def hdl_wid_13(desc):
     if not stack.mesh.is_initialized:
         btp.mesh_config_prov()
         btp.mesh_init()
+        # Wait a few seconds so that Mesh is initialized and everything is loaded from flash
+        time.sleep(5)
 
     if stack.mesh.is_provisioned.data:
-        # Wait a few seconds so that Mesh is initialized and everything is loaded from flash
-        time.sleep(7)
         btp.mesh_reset()
         time.sleep(5)
+
+    btp.mesh_prov_enable()
 
     return True
 
