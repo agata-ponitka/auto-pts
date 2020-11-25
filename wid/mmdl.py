@@ -188,6 +188,10 @@ def gen_onoff_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_gen_onoff_set(onoff, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [onoff])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -200,8 +204,12 @@ def gen_onoff_set_unack(params):
 
 
 def gen_onoff_status(params):
-    return True
-
+    present_onoff = params['Present OnOff']
+    stack = get_stack()
+    if [present_onoff] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 def gen_lvl_get(params):
     btp.mmdl_gen_lvl_get()
@@ -213,6 +221,10 @@ def gen_lvl_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_gen_lvl_set(lvl, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [lvl])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -229,6 +241,10 @@ def gen_lvl_delta_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_gen_lvl_delta_set(lvl, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [lvl + 4352])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -245,6 +261,10 @@ def gen_lvl_move_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_gen_lvl_move_set(lvl, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [lvl + 4352])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -257,7 +277,12 @@ def gen_lvl_set_move_unack(params):
 
 
 def gen_lvl_status(params):
-    return True
+    current_lvl = params['Present Level']
+    stack = get_stack()
+    if [current_lvl] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_dtt_get(params):
@@ -268,6 +293,10 @@ def gen_dtt_get(params):
 def gen_dtt_set(params, ack):
     tt = params['Transition Time']
     btp.mmdl_gen_dtt_set(tt, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [tt])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -280,7 +309,12 @@ def gen_dtt_set_unack(params):
 
 
 def gen_dtt_status(params):
-    return True
+    tt = params['Transition Time']
+    stack = get_stack()
+    if [tt] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_ponoff_get(params):
@@ -291,6 +325,10 @@ def gen_ponoff_get(params):
 def gen_ponoff_set(params, ack):
     on_power_up = params['OnPowerUp']
     btp.mmdl_gen_ponoff_set(on_power_up, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [on_power_up])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -303,8 +341,12 @@ def gen_ponoff_set_unack(params):
 
 
 def gen_ponoff_status(params):
-    return True
-
+    on_power_up = params['OnPowerUp']
+    stack = get_stack()
+    if on_power_up == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 def gen_plvl_get(params):
     btp.mmdl_gen_plvl_get()
@@ -316,6 +358,10 @@ def gen_plvl_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_gen_plvl_set(power_level, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [power_level])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -328,7 +374,12 @@ def gen_plvl_set_unack(params):
 
 
 def gen_plvl_status(params):
-    return True
+    power_level = params['Present Power']
+    stack = get_stack()
+    if [power_level] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_plvl_dflt_get(params):
@@ -342,12 +393,21 @@ def gen_plvl_last_get(params):
 
 
 def gen_plvl_last_status(params):
-    return True
+    power_level = params['Power Last']
+    stack = get_stack()
+    if [power_level] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_plvl_dflt_set(params, ack):
     power_default = params['Power Default']
     btp.mmdl_gen_plvl_dflt_set(power_default, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [power_default])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
@@ -360,7 +420,12 @@ def gen_plvl_dflt_set_unack(params):
 
 
 def gen_plvl_dflt_status(params):
-    return True
+    power_default = params['Present Power']
+    stack = get_stack()
+    if [power_default] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_plvl_range_get(params):
@@ -372,19 +437,29 @@ def gen_plvl_range_set(params, ack):
     range_min = params['Range Min']
     range_max = params['Range Max']
     btp.mmdl_gen_plvl_range_set(range_min, range_max, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [0, range_min, range_max])
+    stack.mesh.status_data_set('Ack', ack)
     return True
 
 
 def gen_plvl_range_set_ack(params):
     return gen_plvl_range_set(params, ack=True)
 
-
 def gen_plvl_range_set_unack(params):
     return gen_plvl_range_set(params, ack=False)
 
 
 def gen_plvl_range_status(params):
-    return True
+    range_min = params['Range Min']
+    range_max = params['Range Max']
+    status = params['Status']
+    stack = get_stack()
+    if [status, range_min, range_max] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_battery_get(params):
@@ -393,7 +468,15 @@ def gen_battery_get(params):
 
 
 def gen_battery_status(params):
-    return True
+    power_default = params['Battery Level']
+    discharge_min = params['Time to Discharge']
+    charge_min = params['Time to Charge']
+    flags = params['Flags']
+    stack = get_stack()
+    if [power_default, discharge_min, charge_min, flags] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_loc_global_get(params):
@@ -406,6 +489,10 @@ def gen_loc_global_set(params, ack):
     alt = params['Global Altitude']
 
     btp.mmdl_gen_loc_global_set(lat, lon, alt, ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [lat, lon, alt])
     return True
 
 
@@ -418,7 +505,14 @@ def gen_loc_global_set_unack(params):
 
 
 def gen_loc_global_status(params):
-    return True
+    lat = params['Global Latitude']
+    lon = params['Global Longitude']
+    alt = params['Global Altitude']
+    stack = get_stack()
+    if [lat, lon, alt] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_loc_local_get(params):
@@ -434,6 +528,10 @@ def gen_loc_local_set(params, ack):
     location_uncert = params['Location Uncertainty']
 
     btp.mmdl_gen_loc_local_set(north, east, alt, floor, location_uncert, ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [north, east, alt, floor, location_uncert])
     return True
 
 
@@ -446,7 +544,17 @@ def gen_loc_local_set_unack(params):
 
 
 def gen_loc_local_status(params):
-    return True
+    north = params['Local North']
+    east = params['Local East']
+    alt = params['Local Altitude']
+    floor = params['Floor']
+    location_uncert = params['Location Uncertainty']
+
+    stack = get_stack()
+    if [north, east, alt, floor, location_uncert] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_mfr_props_get(params):
@@ -455,7 +563,13 @@ def gen_mfr_props_get(params):
 
 
 def gen_mfr_props_status(params):
-    return True
+    prop_id = params['Property IDs']
+
+    stack = get_stack()
+    if [prop_id] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_mfr_prop_get(params):
@@ -467,6 +581,10 @@ def gen_mfr_prop_set(params, ack):
     prop_id = params['Property ID']
     access = params.get('Access', 3)
     btp.mmdl_gen_prop_set(0x00, prop_id, access, '', ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [prop_id, access, ''])
     return True
 
 
@@ -479,7 +597,15 @@ def gen_mfr_prop_set_unack(params):
 
 
 def gen_mfr_prop_status(params):
-    return True
+    prop_id = params['Property ID']
+    val = params['Property Value']
+    access = params['Access']
+
+    stack = get_stack()
+    if [prop_id, access, val] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_admin_props_get(params):
@@ -488,7 +614,13 @@ def gen_admin_props_get(params):
 
 
 def gen_admin_props_status(params):
-    return True
+    prop_id = params['Property IDs']
+
+    stack = get_stack()
+    if [prop_id] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_admin_prop_get(params):
@@ -503,6 +635,10 @@ def gen_admin_prop_set(params, ack):
     access = params.get('Access', 3)
     payload = hex(val)[2:]
     btp.mmdl_gen_prop_set(0x01, prop_id, access, payload, ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [prop_id, access, val])
     return True
 
 
@@ -515,7 +651,15 @@ def gen_admin_prop_set_unack(params):
 
 
 def gen_admin_prop_status(params):
-    return True
+    prop_id = params['Property ID']
+    val = params['Property Value']
+    access = params['Access']
+
+    stack = get_stack()
+    if [prop_id, access, val] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_usr_props_get(params):
@@ -529,6 +673,10 @@ def gen_usr_prop_set(params, ack):
     access = params.get('Access', 3)
     payload = hex(val)[2:]
     btp.mmdl_gen_prop_set(0x02, prop_id, access, payload, ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [prop_id, access, val])
     return True
 
 
@@ -541,7 +689,13 @@ def gen_usr_prop_set_unack(params):
 
 
 def gen_usr_props_status(params):
-    return True
+    prop_id = params['Property IDs']
+
+    stack = get_stack()
+    if [prop_id] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_usr_prop_get(params):
@@ -551,7 +705,14 @@ def gen_usr_prop_get(params):
 
 
 def gen_usr_prop_status(params):
-    return True
+    prop_id = params['Property ID']
+    val = params['Property Value']
+    access = params['Access']
+    stack = get_stack()
+    if [prop_id, access, val] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def gen_cli_props_get(params):
@@ -561,7 +722,13 @@ def gen_cli_props_get(params):
 
 
 def gen_cli_props_status(params):
-    return True
+    prop_id = params['Property IDs']
+
+    stack = get_stack()
+    if [prop_id] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def sensor_desc_get(params):
@@ -574,7 +741,14 @@ def sensor_desc_get(params):
 
 
 def sensor_desc_status(params):
-    return True
+    desc = params['Descriptor']
+
+    stack = get_stack()
+    log("%r   %r", stack.mesh.rcv_status_data_get('Status'), [desc])
+    if [desc] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def sensor_get(params):
@@ -587,7 +761,23 @@ def sensor_get(params):
 
 
 def sensor_status(params):
-    return True
+    stack = get_stack()
+    if '[0] Type' and '[1] Type' and '[2] Type' in params:
+        sensor_id_0 = int('0042', 16)
+        sensor_data_0 = 12
+        sensor_id_1 = int('004E', 16)
+        sensor_data_1 = 563412
+        sensor_id_2 = int('006F', 16)
+        sensor_data_2 = 563412
+        stack.mesh.status_data_set('Status', [sensor_id_0, sensor_data_0, sensor_id_1, sensor_data_1, sensor_id_2, sensor_data_2])
+    elif '[0] Type' in params:
+        sensor_id_0 = int('0042', 16)
+        sensor_data_0 = 12
+        stack.mesh.status_data_set('Status', [sensor_id_0, sensor_data_0])
+    if stack.mesh.status_data_get('Status') == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def sensor_cadence_get(params):
@@ -599,6 +789,10 @@ def sensor_cadence_set(params, ack):
     sensor_id = 0x0042
     cadence_data = "0100a00100a0"
     btp.mmdl_sensor_cadence_set(sensor_id, cadence_data, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [cadence_data])
     return True
 
 
@@ -611,7 +805,14 @@ def sensor_cadence_set_unack(params):
 
 
 def sensor_cadence_status(params):
-    return True
+    prop_id = params['PropertyId']
+    cadence_data = params['CadenceData']
+
+    stack = get_stack()
+    if [prop_id, cadence_data] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def sensor_settings_get(params):
@@ -621,7 +822,14 @@ def sensor_settings_get(params):
 
 
 def sensor_settings_status(params):
-    return True
+    sensor_id = params['PropertyId']
+    settings = params['SensorSettingPropertyIds']
+
+    stack = get_stack()
+    if [sensor_id, settings] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def sensor_setting_get(params):
@@ -658,7 +866,14 @@ def sensor_column_get(params):
 
 
 def sensor_column_status(params):
-    return True
+    sensor_id = params['PropertyId']
+    column_data = params['ColumnData']
+
+    stack = get_stack()
+    if [sensor_id, column_data] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def sensor_series_get(params):
@@ -670,7 +885,14 @@ def sensor_series_get(params):
 
 
 def sensor_series_status(params):
-    return True
+    sensor_id = params['PropertyId']
+    column_data = params['ColumnData']
+
+    stack = get_stack()
+    if [sensor_id, column_data] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 ZONE_CHANGE_ZERO_POINT = 0x40
@@ -689,11 +911,24 @@ def time_set(params):
     tai_utc_delta = auth | ((params['TAI-UTC Delta']) << 1)
     time_zone_offset = params['Time Zone Offset']
     btp.mmdl_time_set(tai, subsecond, uncertainty, tai_utc_delta, time_zone_offset)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [tai, subsecond, uncertainty, tai_utc_delta, time_zone_offset])
     return True
 
 
 def time_status(params):
-    return True
+    tai = params['TAI Seconds']
+    subsecond = params['Subsecond']
+    uncertainty = params['Uncertainty']
+    auth = params['Time Authority']
+    tai_utc_delta = auth | ((params['TAI-UTC Delta']) << 1)
+    time_zone_offset = params['Time Zone Offset']
+    stack = get_stack()
+    if [tai, subsecond, uncertainty, tai_utc_delta, time_zone_offset] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def time_role_get(params):
@@ -704,11 +939,19 @@ def time_role_get(params):
 def time_role_set(params):
     role = params['Time Role']
     btp.mmdl_time_role_set(role)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [role])
     return True
 
 
 def time_role_status(params):
-    return True
+    role = params['Time Role']
+    stack = get_stack()
+    if [role] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def time_zone_get(params):
@@ -720,11 +963,21 @@ def time_zone_set(params):
     new_offset = params['Time Zone Offset New'] - ZONE_CHANGE_ZERO_POINT
     timestamp = params['TAI of Zone Change']
     btp.mmdl_time_zone_set(new_offset, timestamp)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [new_offset, timestamp])
     return True
 
 
 def time_zone_status(params):
-    return True
+    current_offset = params['Time Zone Offset Current']  - ZONE_CHANGE_ZERO_POINT
+    new_offset = params['Time Zone Offset New'] - ZONE_CHANGE_ZERO_POINT
+    timestamp = params['TAI of Zone Change']
+    stack = get_stack()
+    if [current_offset, new_offset, timestamp] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def time_tai_utc_delta_get(params):
@@ -736,11 +989,22 @@ def time_tai_utc_delta_set(params):
     delta_new = params['TAI-UTC Delta New'] - UTC_CHANGE_ZERO_POINT
     timestamp = params['TAI of Delta Change']
     btp.mmdl_time_tai_utc_delta_set(delta_new, timestamp)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Status', [delta_new, timestamp])
     return True
 
 
 def time_tai_utc_delta_status(params):
-    return True
+    delta_current = params['TAI-UTC Delta Current'] -UTC_CHANGE_ZERO_POINT
+    delta_new = params['TAI-UTC Delta New'] - UTC_CHANGE_ZERO_POINT
+    timestamp = params['TAI of Delta Change']
+
+    stack = get_stack()
+    if [delta_current, delta_new, timestamp] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lightness_get(params):
@@ -753,6 +1017,10 @@ def light_lightness_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_light_lightness_set(power_level, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [power_level])
     return True
 
 
@@ -765,7 +1033,12 @@ def light_lightness_set_unack(params):
 
 
 def light_lightness_status(params):
-    return True
+    power_level = params['Present Lightness']
+    stack = get_stack()
+    if [power_level] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lightness_linear_get(params):
@@ -778,6 +1051,10 @@ def light_lightness_linear_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_light_lightness_linear_set(power_level, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [power_level])
     return True
 
 
@@ -790,7 +1067,12 @@ def light_lightness_linear_set_unack(params):
 
 
 def light_lightness_linear_status(params):
-    return True
+    power_level = params['Present Lightness']
+    stack = get_stack()
+    if [power_level] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lightness_last_get(params):
@@ -799,7 +1081,12 @@ def light_lightness_last_get(params):
 
 
 def light_lightness_last_status(params):
-    return True
+    power_level = params['Lightness']
+    stack = get_stack()
+    if [power_level] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lightness_default_get(params):
@@ -810,6 +1097,10 @@ def light_lightness_default_get(params):
 def light_lightness_default_set(params, ack):
     dflt = params['Lightness']
     btp.mmdl_light_lightness_default_set(dflt, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [dflt])
     return True
 
 
@@ -822,7 +1113,12 @@ def light_lightness_default_set_unack(params):
 
 
 def light_lightness_default_status(params):
-    return True
+    power_level = params['Lightness']
+    stack = get_stack()
+    if [power_level] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lightness_range_get(params):
@@ -834,6 +1130,11 @@ def light_lightness_range_set(params, ack):
     min_val = params['Range Min']
     max_val = params['Range Max']
     btp.mmdl_light_lightness_range_set(min_val, max_val, ack=ack)
+
+    status_code = 0
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [status_code, min_val, max_val])
     return True
 
 
@@ -846,7 +1147,14 @@ def light_lightness_range_set_unack(params):
 
 
 def light_lightness_range_status(params):
-    return True
+    min_val = params['Range Min']
+    max_val = params['Range Max']
+    status = params['Status Code']
+    stack = get_stack()
+    if [status, min_val, max_val] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lc_mode_get(params):
@@ -857,6 +1165,10 @@ def light_lc_mode_get(params):
 def light_lc_mode_set(params, ack):
     mode = params['Mode']
     btp.mmdl_light_lc_mode_set(mode, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [mode])
     return True
 
 
@@ -869,7 +1181,12 @@ def light_lc_mode_set_unack(params):
 
 
 def light_lc_mode_status(params):
-    return True
+    mode = params['Mode']
+    stack = get_stack()
+    if [mode] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lc_occupancy_mode_get(params):
@@ -880,6 +1197,10 @@ def light_lc_occupancy_mode_get(params):
 def light_lc_occupancy_mode_set(params, ack):
     occupancy_mode = params['Occupancy Mode']
     btp.mmdl_light_lc_occupancy_mode_set(occupancy_mode, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [occupancy_mode])
     return True
 
 
@@ -892,7 +1213,12 @@ def light_lc_occupancy_mode_set_unack(params):
 
 
 def light_lc_occupancy_mode_status(params):
-    return True
+    occupancy_mode = params['Occupancy Mode']
+    stack = get_stack()
+    if [occupancy_mode] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lc_light_onoff_mode_get(params):
@@ -905,6 +1231,10 @@ def light_lc_light_onoff_mode_set(params, ack):
     tt = params.get('Transition Time', None)
     delay = params.get('Delay', None)
     btp.mmdl_light_lc_light_onoff_mode_set(light_onoff_mode, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [light_onoff_mode])
     return True
 
 
@@ -917,7 +1247,12 @@ def light_lc_light_onoff_mode_set_unack(params):
 
 
 def light_lc_light_onoff_mode_status(params):
-    return True
+    light_onoff_mode = params['Present Light OnOff']
+    stack = get_stack()
+    if [light_onoff_mode] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def light_lc_property_get(params):
@@ -930,6 +1265,10 @@ def light_lc_property_set(params, ack):
     prop_id = params['Light LC Property ID']
     prop_val = params['Light LC Property Value']
     btp.mmdl_light_lc_property_set(prop_id, prop_val, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [prop_id, prop_val])
     return True
 
 
@@ -942,7 +1281,13 @@ def light_lc_property_set_unack(params):
 
 
 def light_lc_property_status(params):
-    return True
+    prop_val = params['Light LC Property Value']
+    prop_id = params['Light LC Property ID']
+    stack = get_stack()
+    if [prop_id, prop_val] == stack.mesh.rcv_status_data_get('Status'):
+        return True
+    else:
+        return False
 
 
 def parse_send(params):
@@ -1090,7 +1435,17 @@ def parse_660_desc(desc):
     if desc.startswith('Please send') or desc.startswith('Please confirm the received'):
         return parse_send(params)
     elif desc.startswith('Please confirm IUT has successfully set the new state.'):
-        return True
+        if params:
+            parse_send(params)
+            return True
+        else:
+            stack = get_stack()
+            if  stack.mesh.status_data_get("Ack") == False:
+                return True
+            elif stack.mesh.status_data.data == stack.mesh.rcv_status_data.data:
+                return True
+            else:
+                return False
     else:
         return False
 
