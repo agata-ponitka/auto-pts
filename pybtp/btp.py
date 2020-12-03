@@ -4083,7 +4083,7 @@ def mmdl_gen_battery_get():
     charge_min = int(binascii.hexlify(charge_min),16)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [battery, discharge_min, charge_min, flags])
-    logging.debug("Status: Battery = %r , Discharge Min = %r , Charge Min = %r , Flags = %r", battery, discharge_min, charge_min, flags)
+    logging.debug("Status: Battery = %r , Discharge Min = 0x%x , Charge Min = 0x%x , Flags = %r", battery, discharge_min, charge_min, flags)
 
 def mmdl_gen_loc_global_get():
     logging.debug("%s", mmdl_gen_loc_global_get.__name__)
@@ -4095,7 +4095,7 @@ def mmdl_gen_loc_global_get():
     lat, lon, alt = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [lat, lon, alt])
-    logging.debug('Status: Lat = %r Lon = %r Alt = %r', lat, lon, alt)
+    logging.debug('Status: Lat = 0x%x Lon = 0x%x Alt = 0x%x', lat, lon, alt)
 
 
 def mmdl_gen_loc_local_get():
@@ -4108,7 +4108,7 @@ def mmdl_gen_loc_local_get():
     north, east, alt, floor, location_uncert = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [north, east, alt, floor, location_uncert])
-    logging.debug('Status: North = %r East = %r Alt = %r Floor = %r Location uncert = %r',  north, east, alt, floor, location_uncert)
+    logging.debug('Status: North = 0x%x East = 0x%x Alt = 0x%x Floor = 0x%x Location uncert = 0x%x',  north, east, alt, floor, location_uncert)
 
 
 def mmdl_gen_loc_global_set(lat, lon, alt, ack=True):
@@ -4124,7 +4124,7 @@ def mmdl_gen_loc_global_set(lat, lon, alt, ack=True):
         lat, lon, alt = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [lat, lon, alt])
-        logging.debug('Status: Lat = %r Lon = %r Alt = %r', lat, lon, alt)
+        logging.debug('Status: Lat = 0x%x Lon = 0x%x Alt = 0x%x', lat, lon, alt)
 
 def mmdl_gen_loc_local_set(north, east, alt, floor, location_uncert, ack=True):
     logging.debug("%s", mmdl_gen_loc_local_set.__name__)
@@ -4139,7 +4139,7 @@ def mmdl_gen_loc_local_set(north, east, alt, floor, location_uncert, ack=True):
         north, east, alt, floor, location_uncert = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [north, east, alt, floor, location_uncert])
-        logging.debug('Status: North %r East %r Alt %r Floor %r Location uncert %r', north, east, alt, floor, location_uncert)
+        logging.debug('Status: North = 0x%x East = 0x%x Alt = 0x%x Floor = 0x%x Location uncert = 0x%x',  north, east, alt, floor, location_uncert)
 
 def mmdl_gen_props_get(kind, prop_id=0):
     logging.debug("%s", mmdl_gen_props_get.__name__)
@@ -4207,7 +4207,7 @@ def mmdl_sensor_desc_get(sensor_id=None):
 
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id])
-    logging.debug('Status: PropertyId = %r ', prop_id)
+    logging.debug('Status: PropertyId = 0x%x ', prop_id)
 
 
 def mmdl_sensor_get(sensor_id):
@@ -4227,7 +4227,7 @@ def mmdl_sensor_get(sensor_id):
         sensor_data = int(binascii.hexlify(sensor_data))
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [sensor_id, sensor_data])
-        logging.debug('Status: Sensor id = %r, Sensor data = %r', sensor_id, sensor_data)
+        logging.debug('Status: Sensor id = 0x%x, Sensor data = 0x%x', sensor_id, sensor_data)
 
     else:
         hdr_fmt = '<H1sH3sH3s'
@@ -4237,7 +4237,7 @@ def mmdl_sensor_get(sensor_id):
         sensor_data_2 = int(binascii.hexlify(sensor_data_2))
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [sensor_id_0, sensor_data_0, sensor_id_1, sensor_data_1, sensor_id_2, sensor_data_2])
-        logging.debug('Status: Sensor id = %r Sensor data = %r \n Sensor id = %r Sensor data = %r \n Sensor id = %r Sensor data = %r',
+        logging.debug('Status: Sensor id = 0x%x Sensor data = 0x%x \n Sensor id = 0x%x Sensor data = 0x%x \n Sensor id = 0x%x Sensor data = 0x%x',
                       sensor_id_0, sensor_data_0, sensor_id_1, sensor_data_1, sensor_id_2, sensor_data_2)
 
 
@@ -4253,7 +4253,7 @@ def mmdl_sensor_cadence_get(sensor_id):
     (sensor_id,) = struct.unpack_from(hdr_fmt, rsp[6:])
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [sensor_id, data])
-    logging.debug('Status: Sensor data = %r Sensor id = %r', data, sensor_id)
+    logging.debug('Status: Sensor data = 0x%x Sensor id = 0x%x', data, sensor_id)
 
 
 def mmdl_sensor_cadence_set(sensor_id, cadence_data, ack=True):
@@ -4285,7 +4285,7 @@ def mmdl_sensor_settings_get(sensor_id):
     (sensor_id, prop_id) = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id, sensor_id])
-    logging.debug('Status: Property Id = %r Sensor Id = %r', prop_id, sensor_id)
+    logging.debug('Status: Sensor Id = 0x%x Setting prop Id = 0x%x', sensor_id, prop_id)
 
 
 def mmdl_sensor_setting_get(sensor_id, setting_id):
@@ -4327,7 +4327,7 @@ def mmdl_sensor_column_get(sensor_id, raw_value):
     column_data = int(binascii.hexlify(column_data), 16)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id, column_data])
-    logging.debug('Status: Property ID = %r Column data = %r', prop_id, column_data)
+    logging.debug('Status: Property ID = 0x%x Column data = %r', prop_id, column_data)
 
 
 def mmdl_sensor_series_get(sensor_id, raw_values):
@@ -4346,7 +4346,7 @@ def mmdl_sensor_series_get(sensor_id, raw_values):
     column_data = int(binascii.hexlify(column_data), 16)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id, column_data])
-    logging.debug('Status: Property ID = %r Column data = %r', prop_id, column_data)
+    logging.debug('Status: Property ID = 0x%x Column data = 0x%x', prop_id, column_data)
 
 def mmdl_time_get():
     logging.debug("%s", mmdl_time_get.__name__)
@@ -4420,7 +4420,7 @@ def mmdl_time_zone_get():
     current_offset, new_offset, timestamp = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [current_offset, new_offset, timestamp])
-    logging.debug('Status: Current offset = %r , New offset = %r Timestamp = %r', current_offset, new_offset, timestamp)
+    logging.debug('Status: Current offset = 0x%x , New offset = 0x%x Timestamp = 0x%x', current_offset, new_offset, timestamp)
 
 def mmdl_time_zone_set(new_offset, timestamp):
     logging.debug("%s", mmdl_time_zone_set.__name__)
