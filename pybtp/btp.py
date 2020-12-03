@@ -4256,10 +4256,10 @@ def mmdl_sensor_cadence_get(sensor_id):
     logging.debug('Status: Sensor data = 0x%x Sensor id = 0x%x', data, sensor_id)
 
 
-def mmdl_sensor_cadence_set(sensor_id, cadence_data, ack=True):
+def mmdl_sensor_cadence_set(sensor_id, payload, ack=True):
     logging.debug("%s", mmdl_sensor_cadence_set.__name__)
 
-    payload = binascii.unhexlify(cadence_data)
+    payload = binascii.unhexlify(payload)
     payload_len = len(payload)
 
     iutctl = get_iut()
@@ -4268,7 +4268,7 @@ def mmdl_sensor_cadence_set(sensor_id, cadence_data, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_cadence_set'], data=data)
     if ack == True:
-        data = binascii.hexlify(rsp)
+        data = binascii.hexlify(rsp).decode('UTF-8')
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [data])
         logging.debug('Satus: Cadence data = %r ', data)
@@ -4284,7 +4284,7 @@ def mmdl_sensor_settings_get(sensor_id):
     hdr_fmt = '<HH'
     (sensor_id, prop_id) = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
-    stack.mesh.rcv_status_data_set('Status', [prop_id, sensor_id])
+    stack.mesh.rcv_status_data_set('Status', [sensor_id, prop_id])
     logging.debug('Status: Sensor Id = 0x%x Setting prop Id = 0x%x', sensor_id, prop_id)
 
 
@@ -4322,9 +4322,9 @@ def mmdl_sensor_column_get(sensor_id, raw_value):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_column_get'], data=data)
 
-    hdr_fmt = '<3sH'
-    (column_data, prop_id) = struct.unpack_from(hdr_fmt, rsp)
-    column_data = int(binascii.hexlify(column_data), 16)
+    hdr_fmt = '<H%ds' % (len(rsp) - 2)
+    (prop_id, column_data) = struct.unpack_from(hdr_fmt, rsp)
+    column_data = binascii.hexlify(column_data).decode('UTF-8')
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id, column_data])
     logging.debug('Status: Property ID = 0x%x Column data = %r', prop_id, column_data)
