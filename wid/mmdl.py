@@ -867,7 +867,7 @@ def sensor_column_get(params):
 
 def sensor_column_status(params):
     sensor_id = params['PropertyId']
-    column_data = params['ColumnData']
+    column_data = hex(params['ColumnData'])[2:]
 
     stack = get_stack()
     if [sensor_id, column_data] == stack.mesh.rcv_status_data_get('Status'):
