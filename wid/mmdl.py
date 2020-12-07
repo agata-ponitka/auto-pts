@@ -343,7 +343,7 @@ def gen_ponoff_set_unack(params):
 def gen_ponoff_status(params):
     on_power_up = params['OnPowerUp']
     stack = get_stack()
-    if on_power_up == stack.mesh.rcv_status_data_get('Status'):
+    if [on_power_up] == stack.mesh.rcv_status_data_get('Status'):
         return True
     else:
         return False
@@ -834,14 +834,14 @@ def sensor_settings_status(params):
 
 def sensor_setting_get(params):
     sensor_id = 0x0042
-    setting_id = 0x2001
+    setting_id = 0x006e
     btp.mmdl_sensor_setting_get(sensor_id, setting_id)
     return True
 
 def sensor_setting_set(params, ack):
     sensor_id = 0x0042
-    setting_id = 0x2001
-    setting_raw = '0123'
+    setting_id = 0x006e
+    setting_raw = '010101'
     btp.mmdl_sensor_setting_set(sensor_id, setting_id, setting_raw, ack)
     return True
 

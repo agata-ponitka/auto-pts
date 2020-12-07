@@ -3824,7 +3824,7 @@ def mmdl_gen_onoff_set(onoff, tt=None, delay=None, ack=True):
         hdr_fmt = '<BB'
         onoff_r, target_onoff = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay > 0:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target_onoff])
         else:
             stack.mesh.rcv_status_data_set("Status", [onoff_r])
@@ -3859,7 +3859,7 @@ def mmdl_gen_lvl_set(lvl, tt=None, delay=None, ack=True):
         hdr_fmt = '<hhi'
         level, target_level, rem_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay is not None:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target_level])
         else:
             stack.mesh.rcv_status_data_set("Status", [level])
@@ -3881,7 +3881,7 @@ def mmdl_gen_lvl_delta_set(delta, tt=None, delay=None, ack=True):
         hdr_fmt = '<hh'
         delta_r, delta_target = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay is not None:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [delta_target])
         else:
             stack.mesh.rcv_status_data_set("Status", [delta_r])
@@ -3904,7 +3904,7 @@ def mmdl_gen_lvl_move_set(move, tt=None, delay=None, ack=True):
         hdr_fmt = '<hh'
         level, target_level = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay is not None:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target_level])
         else:
             stack.mesh.rcv_status_data_set("Status", [level])
@@ -3948,7 +3948,7 @@ def mmdl_gen_ponoff_get():
     on_power_up, = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [on_power_up])
-    logging.debug(" Status on power up = %r", stack.mesh.rcv_status_data_get('Status'))
+    logging.debug("Status on power up = %r", stack.mesh.rcv_status_data_get('Status'))
 
 def mmdl_gen_ponoff_set(on_power_up, ack=True):
     logging.debug("%s", mmdl_gen_ponoff_set.__name__)
@@ -3994,7 +3994,7 @@ def mmdl_gen_plvl_set(power_lvl, tt=None, delay=None, ack=True):
         hdr_fmt = '<HH'
         present_power, target_power = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay is not None:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target_power])
         else:
             stack.mesh.rcv_status_data_set('Status', [present_power])
@@ -4167,12 +4167,12 @@ def mmdl_gen_prop_get(kind, prop_id):
     val = int(binascii.hexlify(rsp[4:]), 16)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id, access, val])
-    logging.debug('Status: Property ID = %r, Access = %r, Size = %r, Val = %r', prop_id, access, size, val)
+    logging.debug('Status: Property ID = %r, Access = %r, Size = %r, Val = 0x%x', prop_id, access, size, val)
 
-def mmdl_gen_prop_set(kind, prop_id, access, payload, ack=True):
+def mmdl_gen_prop_set(kind, prop_id, access, value, ack=True):
     logging.debug("%s", mmdl_gen_prop_set.__name__)
 
-    payload = binascii.unhexlify(payload)
+    payload = binascii.unhexlify(value)
     payload_len = len(payload)
 
     iutctl = get_iut()
@@ -4185,8 +4185,8 @@ def mmdl_gen_prop_set(kind, prop_id, access, payload, ack=True):
         hdr_fmt = '<HBB'
         (prop_id_r, access_r, size_r) = struct.unpack_from(hdr_fmt, rsp)
         val = int(binascii.hexlify(rsp[4:]), 16)
-        if payload == '':
-            val = payload
+        if value == '':
+            val = value
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [prop_id, access, val])
         logging.debug('Status: Property ID = %r, Access = %r, Size = %r, Val = %r', prop_id, access, size_r, val)
@@ -4493,7 +4493,7 @@ def mmdl_light_lightness_set(lightness, tt=None, delay=None, ack=True):
         hdr_fmt = '<HHi'
         lightness, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay is not None:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [lightness])
@@ -4532,7 +4532,7 @@ def mmdl_light_lightness_linear_set(lightness_linear, tt=None, delay=None, ack=T
         hdr_fmt = '<HHi'
         lightness_linear, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay is not None:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [lightness_linear])
@@ -4703,7 +4703,7 @@ def mmdl_light_lc_light_onoff_mode_set(light_onoff_mode, tt=None, delay=None, ac
         hdr_fmt = '<BBi'
         light_onoff_mode, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay > 0:
+        if delay:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [light_onoff_mode])
@@ -4719,7 +4719,7 @@ def mmdl_light_lc_property_get(prop_id):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_property_get'], data=data)
 
-    hdr_fmt = '<BI'
+    hdr_fmt = '<HH'
     prop_id, prop_val = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [prop_id, prop_val])
@@ -4735,7 +4735,7 @@ def mmdl_light_lc_property_set(prop_id, prop_val, ack=True):
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_property_set'], data=data)
 
     if ack == True:
-        hdr_fmt = '<BI'
+        hdr_fmt = '<HH'
         prop_id, prop_val = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [prop_id, prop_val])
