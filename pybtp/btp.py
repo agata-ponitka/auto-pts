@@ -3820,7 +3820,7 @@ def mmdl_gen_onoff_set(onoff, tt=None, delay=None, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_onoff_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<BB'
         onoff_r, target_onoff = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -3855,7 +3855,7 @@ def mmdl_gen_lvl_set(lvl, tt=None, delay=None, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<hhi'
         level, target_level, rem_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -3877,7 +3877,7 @@ def mmdl_gen_lvl_delta_set(delta, tt=None, delay=None, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_delta_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<hh'
         delta_r, delta_target = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -3900,7 +3900,7 @@ def mmdl_gen_lvl_move_set(move, tt=None, delay=None, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_move_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<hh'
         level, target_level = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -3931,7 +3931,7 @@ def mmdl_gen_dtt_set(tt, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_dtt_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<i'
         tt, = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -3958,7 +3958,7 @@ def mmdl_gen_ponoff_set(on_power_up, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_ponoff_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<b'
         on_power_up, = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -3988,9 +3988,8 @@ def mmdl_gen_plvl_set(power_lvl, tt=None, delay=None, ack=True):
         data.extend(struct.pack("<B", delay))
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_set'], data=data)
-    desc = binascii.hexlify(rsp)
-    logging.debug("desc %r", desc)
-    if ack == True:
+
+    if ack:
         hdr_fmt = '<HH'
         present_power, target_power = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4033,7 +4032,7 @@ def mmdl_gen_plvl_dflt_set(dflt, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_dflt_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<H'
         power_default, = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4062,7 +4061,7 @@ def mmdl_gen_plvl_range_set(range_min, range_max, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_range_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<HH'
         status, = struct.unpack_from('<B', rsp)
         range_min, range_max, = struct.unpack_from(hdr_fmt, rsp[2:])
@@ -4119,7 +4118,7 @@ def mmdl_gen_loc_global_set(lat, lon, alt, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_loc_global_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<IIH'
         lat, lon, alt = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4134,7 +4133,7 @@ def mmdl_gen_loc_local_set(north, east, alt, floor, location_uncert, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_loc_local_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<HHHBH'
         north, east, alt, floor, location_uncert = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4181,7 +4180,7 @@ def mmdl_gen_prop_set(kind, prop_id, access, value, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_prop_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<HBB'
         (prop_id_r, access_r, size_r) = struct.unpack_from(hdr_fmt, rsp)
         val = int(binascii.hexlify(rsp[4:]), 16)
@@ -4267,7 +4266,7 @@ def mmdl_sensor_cadence_set(sensor_id, payload, ack=True):
     data.extend(payload)
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_cadence_set'], data=data)
-    if ack == True:
+    if ack:
         data = binascii.hexlify(rsp).decode('UTF-8')
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [data])
@@ -4472,7 +4471,7 @@ def mmdl_light_lightness_get():
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_get'])
 
     hdr_fmt = '<HHi'
-    lightness, tt, delay = struct.unpack_from(hdr_fmt, rsp)
+    lightness, tt, remaining_time = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [lightness])
     logging.debug('Status: Lightness = %r', lightness)
@@ -4489,7 +4488,7 @@ def mmdl_light_lightness_set(lightness, tt=None, delay=None, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<HHi'
         lightness, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4508,7 +4507,6 @@ def mmdl_light_lightness_linear_get():
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_linear_get'])
 
     hdr_fmt = '<HH'
-    hdr_len = struct.calcsize(hdr_fmt)
     lightness, lightness_target = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [lightness])
@@ -4528,7 +4526,7 @@ def mmdl_light_lightness_linear_set(lightness_linear, tt=None, delay=None, ack=T
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_linear_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<HHi'
         lightness_linear, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4576,7 +4574,7 @@ def mmdl_light_lightness_default_set(dflt, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_default_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<H'
         dflt, = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4590,9 +4588,8 @@ def mmdl_light_lightness_range_get():
     iutctl = get_iut()
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_range_get'])
 
-    hdr_fmt = '<HH'
-    status, = struct.unpack_from('<B', rsp)
-    min_val, max_val = struct.unpack_from(hdr_fmt, rsp[2:])
+    hdr_fmt = '<HHH'
+    status, min_val, max_val = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set('Status', [status, min_val, max_val])
     logging.debug('Status: Status Code = %r , Range min = %r Range max = %r', status, min_val, max_val)
@@ -4606,10 +4603,9 @@ def mmdl_light_lightness_range_set(min_val, max_val, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lightness_range_set'], data=data)
 
-    if ack == True:
-        hdr_fmt = '<HH'
-        status, = struct.unpack_from('<B', rsp)
-        min_val, max_val = struct.unpack_from(hdr_fmt, rsp[2:])
+    if ack:
+        hdr_fmt = '<HHH'
+        status, min_val, max_val = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
         stack.mesh.rcv_status_data_set('Status', [status, min_val, max_val])
         logging.debug('Status: Status code = %r, Range min = %r Range max = %r', status, min_val, max_val)
@@ -4636,7 +4632,7 @@ def mmdl_light_lc_mode_set(mode, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_mode_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<B'
         mode, = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4665,7 +4661,7 @@ def mmdl_light_lc_occupancy_mode_set(occupancy_mode, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_occupancy_mode_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<B'
         occupancy_mode, = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4699,7 +4695,7 @@ def mmdl_light_lc_light_onoff_mode_set(light_onoff_mode, tt=None, delay=None, ac
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_light_onoff_mode_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<BBi'
         light_onoff_mode, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
@@ -4734,7 +4730,7 @@ def mmdl_light_lc_property_set(prop_id, prop_val, ack=True):
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_lc_property_set'], data=data)
 
-    if ack == True:
+    if ack:
         hdr_fmt = '<HH'
         prop_id, prop_val = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
