@@ -469,6 +469,43 @@ MMDL = {
     "sensor_data_set": (defs.BTP_SERVICE_ID_MMDL,
                         defs.MMDL_SENSOR_DATA_SET,
                         CONTROLLER_INDEX),
+    "light_ctl_states_get": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_STATES_GET,
+                             CONTROLLER_INDEX, ""),
+    "light_ctl_states_set": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_STATES_SET,
+                             CONTROLLER_INDEX),
+    "light_ctl_temperature_get": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_TEMPERATURE_GET,
+                             CONTROLLER_INDEX, ""),
+    "light_ctl_temperature_set": (defs.BTP_SERVICE_ID_MMDL,
+                                  defs.MMDL_LIGHT_CTL_TEMPERATURE_SET,
+                                  CONTROLLER_INDEX),
+    "light_ctl_default_get": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_DEFAULT_GET,
+                             CONTROLLER_INDEX, ""),
+    "light_ctl_default_set": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_DEFAULT_SET,
+                             CONTROLLER_INDEX),
+    "light_ctl_temp_range_get": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_TEMPERATURE_RANGE_GET,
+                             CONTROLLER_INDEX, ""),
+    "light_ctl_temp_range_set": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_LIGHT_CTL_TEMPERATURE_RANGE_SET,
+                             CONTROLLER_INDEX),
+    "scene_get": (defs.BTP_SERVICE_ID_MMDL,
+                             defs.MMDL_SCENE_STATE_GET,
+                             CONTROLLER_INDEX, ""),
+    "scene_register_get": (defs.BTP_SERVICE_ID_MMDL,
+                            defs.MMDL_SCENE_REGISTER_GET,
+                            CONTROLLER_INDEX, ""),
+    "scene_store_procedure": (defs.BTP_SERVICE_ID_MMDL,
+                           defs.MMDL_SCENE_STORE_PROCEDURE,
+                           CONTROLLER_INDEX),
+    "scene_recall": (defs.BTP_SERVICE_ID_MMDL,
+                              defs.MMDL_SCENE_RECALL,
+                              CONTROLLER_INDEX),
+
 }
 
 def verify_description(description):
@@ -4757,6 +4794,195 @@ def mmdl_sensor_data_set(sensor_id, raw_values):
 
     iutctl.btp_socket.send_wait_rsp(*MMDL['sensor_data_set'], data=data)
 
+def mmdl_light_ctl_states_get():
+    logging.debug("%s", mmdl_light_ctl_states_get.__name__)
+
+    iutctl = get_iut()
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_states_get'])
+
+    hdr_fmt = '<HHHHi'
+    current_light, current_temp, target_light, target_temp, remaining_time = struct.unpack_from(hdr_fmt, rsp)
+    stack = get_stack()
+    stack.mesh.rcv_status_data_set('Status', [current_light, current_temp])
+    logging.debug('Status: Light, Temp = %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_light_ctl_states_set(ctl_lightness, ctl_temperature, ctl_delta_uv, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_light_ctl_states_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHHh", ack, ctl_lightness, ctl_temperature, ctl_delta_uv))
+
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_states_set'], data=data)
+
+    if ack:
+        hdr_fmt = '<HHHHi'
+        current_light, current_temp, target_light, target_temp, remaining_time = struct.unpack_from(hdr_fmt, rsp)
+        stack = get_stack()
+        if delay:
+            stack.mesh.rcv_status_data_set("Status", [target_light, target_temp])
+        else:
+            stack.mesh.rcv_status_data_set('Status', [current_light, current_temp])
+
+        logging.debug('Status: Light, Temp = %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_light_ctl_temperature_get():
+    logging.debug("%s", mmdl_light_ctl_temperature_get.__name__)
+
+    iutctl = get_iut()
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_temperature_get'])
+
+    hdr_fmt = '<HhHhi'
+    current_temp, current_delta, target_temp, target_delta, remaining_time = struct.unpack_from(hdr_fmt, rsp)
+    stack = get_stack()
+    stack.mesh.rcv_status_data_set('Status', [current_temp, current_delta])
+    logging.debug('Status: Temp, Delta = %r', stack.mesh.rcv_status_data_get("Status"))
+
+
+def mmdl_light_ctl_temperature_set(ctl_temperature, ctl_delta_uv, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_light_ctl_temperature_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHh", ack,  ctl_temperature, ctl_delta_uv))
+
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_temperature_set'], data=data)
+
+    if ack:
+        hdr_fmt = '<HHHHi'
+        current_temp, current_delta, target_temp, target_delta, remaining_time = struct.unpack_from(hdr_fmt, rsp)
+        stack = get_stack()
+        if delay:
+            stack.mesh.rcv_status_data_set("Status", [target_temp, target_delta])
+        else:
+            stack.mesh.rcv_status_data_set('Status', [current_temp, current_delta])
+
+        logging.debug('Status: Temp, Delta = %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_light_ctl_default_get():
+    logging.debug("%s", mmdl_light_ctl_default_get.__name__)
+
+    iutctl = get_iut()
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_default_get'])
+
+    hdr_fmt = '<HHh'
+    light, temp, delta = struct.unpack_from(hdr_fmt, rsp)
+    stack = get_stack()
+    stack.mesh.rcv_status_data_set('Status', [light, temp, delta])
+    logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_light_ctl_default_set(ctl_lightness, ctl_temperature, ctl_delta_uv, ack=True):
+    logging.debug("%s", mmdl_light_ctl_default_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHHh", ack, ctl_lightness, ctl_temperature, ctl_delta_uv))
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_default_set'], data=data)
+
+    if ack:
+        hdr_fmt = '<HHh'
+        light, temp, delta = struct.unpack_from(hdr_fmt, rsp)
+        stack = get_stack()
+        stack.mesh.rcv_status_data_set('Status', [light, temp, delta])
+        logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_light_ctl_temp_range_get():
+    logging.debug("%s", mmdl_light_ctl_temp_range_get.__name__)
+
+    iutctl = get_iut()
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_temp_range_get'])
+
+    hdr_fmt = '<BHH'
+    status, min, max = struct.unpack_from(hdr_fmt, rsp)
+    stack = get_stack()
+    stack.mesh.rcv_status_data_set('Status', [min, max])
+    logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_light_ctl_temp_range_set(min, max, ack=True):
+    logging.debug("%s", mmdl_light_ctl_temp_range_set.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BHH", ack, min, max))
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_temp_range_set'], data=data)
+
+    if ack:
+        hdr_fmt = '<BHH'
+        status, min, max = struct.unpack_from(hdr_fmt, rsp)
+        stack = get_stack()
+        stack.mesh.rcv_status_data_set('Status', [min, max])
+        logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
+
+def mmdl_scene_get():
+    logging.debug("%s", mmdl_scene_get.__name__)
+
+    iutctl = get_iut()
+    (rsp,) =iutctl.btp_socket.send_wait_rsp(*MMDL['scene_get'])
+
+    hdr_fmt = '<BHH'
+    status, scene, target = struct.unpack_from(hdr_fmt, rsp)
+    stack = get_stack()
+    stack.mesh.rcv_status_data_set('Status', [status, scene])
+    logging.debug('Status: Status = %r , Scene = %r, Target = %r',status, scene, target)
+
+def mmdl_scene_register_get():
+    logging.debug("%s", mmdl_scene_register_get.__name__)
+
+    iutctl = get_iut()
+    (rsp,) =iutctl.btp_socket.send_wait_rsp(*MMDL['scene_register_get'])
+
+    hdr_fmt = '<BH'
+    status, scene = struct.unpack_from(hdr_fmt, rsp)
+    stack = get_stack()
+    stack.mesh.rcv_status_data_set('Status', [status, scene])
+    logging.debug('Status: Status = %r , Scene = %r', status, scene)
+
+def mmdl_scene_store_procedure(scene_num, ack=True):
+    logging.debug("%s", mmdl_scene_store_procedure.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, scene_num))
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['scene_store_procedure'], data=data)
+
+    if ack:
+        hdr_fmt = '<BH'
+        status, scene = struct.unpack_from(hdr_fmt, rsp)
+        stack = get_stack()
+        stack.mesh.rcv_status_data_set('Status', [scene])
+        logging.debug('Status: Status = %r , Scene = %r', status, scene)
+
+def mmdl_scene_recall(scene_num, tt=None, delay=None, ack=True):
+    logging.debug("%s", mmdl_scene_recall.__name__)
+
+    iutctl = get_iut()
+    data = bytearray(struct.pack("<BH", ack, scene_num))
+    if tt is not None:
+        data.extend(struct.pack("<B", tt))
+    if delay is not None:
+        data.extend(struct.pack("<B", delay))
+
+    (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['scene_recall'], data=data)
+
+    if ack:
+        hdr_fmt = '<BHHi'
+        status, scene, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
+        stack = get_stack()
+        if delay:
+            stack.mesh.rcv_status_data_set("Status", [target])
+        else:
+            stack.mesh.rcv_status_data_set('Status', [scene])
+
+        logging.debug('Status: Scene = %r, target = %r ', stack.mesh.rcv_status_data_get("Status"), target)
 
 def event_handler(hdr, data):
     logging.debug("%s %r %r", event_handler.__name__, hdr, data)

@@ -1176,6 +1176,161 @@ def light_lc_property_status(params):
     stack = get_stack()
     return [prop_id, prop_val] == stack.mesh.rcv_status_data_get('Status')
 
+def light_ctl_states_get(params):
+    btp.mmdl_light_ctl_states_get()
+    return True
+
+def light_ctl_states_set(params, ack):
+    ctl_lightness = params['CTL Lightness']
+    ctl_temperature = params['CTL Temperature']
+    ctl_delta_uv = params['CTL Delta UV']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+
+    btp.mmdl_light_ctl_states_set(ctl_lightness, ctl_temperature, ctl_delta_uv, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [ctl_lightness, ctl_temperature])
+    return True
+
+def light_ctl_states_set_ack(params):
+    return light_ctl_states_set(params, True)
+
+def light_ctl_states_set_unack(params):
+    return light_ctl_states_set(params, False)
+
+def light_ctl_states_status(params):
+    return True
+
+def light_ctl_temperature_get(params):
+    btp.mmdl_light_ctl_temperature_get()
+    return True
+
+def light_ctl_temperature_set(params, ack):
+    ctl_temperature = params['CTL Temperature']
+    ctl_delta_uv = params['CTL Delta UV']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+
+    btp.mmdl_light_ctl_temperature_set(ctl_temperature, ctl_delta_uv, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [ctl_temperature, ctl_delta_uv])
+    return True
+
+def light_ctl_temperature_set_ack(params):
+    return light_ctl_temperature_set(params, True)
+
+def light_ctl_temperature_set_unack(params):
+    return light_ctl_temperature_set(params, False)
+
+def light_ctl_temperature_status(params):
+    return True
+
+def light_ctl_default_get(params):
+    btp.mmdl_light_ctl_default_get()
+    return True
+
+def light_ctl_default_set(params, ack):
+    ctl_lightness = params['CTL Lightness']
+    ctl_temperature = params['CTL Temperature']
+    ctl_delta_uv = params['CTL Delta UV']
+
+    btp.mmdl_light_ctl_default_set(ctl_lightness, ctl_temperature, ctl_delta_uv, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [ctl_lightness, ctl_temperature, ctl_delta_uv])
+    return True
+
+def light_ctl_default_set_ack(params):
+    return light_ctl_default_set(params, True)
+
+def light_ctl_default_set_unack(params):
+    return light_ctl_default_set(params, False)
+
+def light_ctl_default_status(params):
+    return True
+
+def light_ctl_temp_range_get(params):
+    btp.mmdl_light_ctl_temp_range_get()
+    return True
+
+def light_ctl_temp_range_set(params, ack):
+    min = params['Range Min']
+    max = params['Range Max']
+
+    btp.mmdl_light_ctl_temp_range_set(min, max, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [min, max])
+    return True
+
+def light_ctl_temp_range_set_ack(params):
+    return light_ctl_temp_range_set(params, True)
+
+def light_ctl_temp_range_set_unack(params):
+    return light_ctl_temp_range_set(params, False)
+
+def light_ctl_temp_range_status(params):
+    return True
+
+def scene_get(params):
+    btp.mmdl_scene_get()
+    return True
+
+def scene_status(params):
+    status_code = params['Status Code']
+    scene = params['Current Scene']
+
+    stack = get_stack()
+    return [status_code, scene] == stack.mesh.rcv_status_data_get('Status')
+
+def scene_register_get(params):
+    btp.mmdl_scene_register_get()
+    return True
+
+def scene_register_status(params):
+    status_code = params['Status Code']
+    scene = params['Current Scene']
+
+    stack = get_stack()
+    return [status_code, scene] == stack.mesh.rcv_status_data_get('Status')
+
+def scene_store_procedure(params, ack):
+    scene_num = params['Scene Number']
+    btp.mmdl_scene_store_procedure(scene_num, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [scene_num])
+    return True
+
+def scene_store_procedure_ack(params):
+    return scene_store_procedure(params, True)
+
+def scene_store_procedure_unack(params):
+    return scene_store_procedure(params, False)
+
+def scene_recall(params, ack):
+    scene_num = params['Scene Number']
+    tt = params.get('Transition Time', None)
+    delay = params.get('Delay', None)
+    btp.mmdl_scene_recall(scene_num, tt, delay, ack=ack)
+
+    stack = get_stack()
+    stack.mesh.status_data_set('Ack', ack)
+    stack.mesh.status_data_set('Status', [scene_num])
+    return True
+
+def scene_recall_ack(params):
+    return scene_recall(params, True)
+
+def scene_recall_unack(params):
+    return scene_recall(params, False)
 
 def parse_send(params):
     opcode = params['Op Code']
@@ -1308,6 +1463,27 @@ def parse_send(params):
         0x62: light_lc_property_set_ack,
         0x63: light_lc_property_set_unack,
         0x64: light_lc_property_status,
+        0x825D: light_ctl_states_get,
+        0x825E: light_ctl_states_set_ack,
+        0x825F: light_ctl_states_set_unack,
+        0x8260: light_ctl_states_status,
+        0x8261: light_ctl_temperature_get,
+        0x8262: light_ctl_temp_range_get,
+        0x8264: light_ctl_temperature_set_ack,
+        0x8265: light_ctl_temperature_set_unack,
+        0x8267: light_ctl_default_get,
+        0x8269: light_ctl_default_set_ack,
+        0x826a: light_ctl_default_set_unack,
+        0x826b: light_ctl_temp_range_set_ack,
+        0x826c: light_ctl_temp_range_set_unack,
+        0x8241: scene_get,
+        0x5e: scene_status,
+        0x8244: scene_register_get,
+        0x8245: scene_register_status,
+        0x8246: scene_store_procedure_ack,
+        0x8247: scene_store_procedure_unack,
+        0x8242: scene_recall_ack,
+        0x8243: scene_recall_unack,
     }
 
     if opcode not in cmds:
