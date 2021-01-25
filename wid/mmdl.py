@@ -1201,7 +1201,11 @@ def light_ctl_states_set_unack(params):
     return light_ctl_states_set(params, False)
 
 def light_ctl_states_status(params):
-    return True
+    current_light = params['Present CTL Lightness']
+    current_temp = params['Present CTL Temperature']
+    stack = get_stack()
+
+    return [current_light, current_temp] == stack.mesh.rcv_status_data_get('Status')
 
 def light_ctl_temperature_get(params):
     btp.mmdl_light_ctl_temperature_get()
@@ -1227,7 +1231,11 @@ def light_ctl_temperature_set_unack(params):
     return light_ctl_temperature_set(params, False)
 
 def light_ctl_temperature_status(params):
-    return True
+    current_temp = params['Present CTL Temperature']
+    current_delta = params['Present CTL Delta UV']
+    stack = get_stack()
+
+    return [current_temp, current_delta] == stack.mesh.rcv_status_data_get('Status')
 
 def light_ctl_default_get(params):
     btp.mmdl_light_ctl_default_get()
@@ -1252,7 +1260,12 @@ def light_ctl_default_set_unack(params):
     return light_ctl_default_set(params, False)
 
 def light_ctl_default_status(params):
-    return True
+    ctl_lightness = params['CTL Lightness']
+    ctl_temp = params['CTL Temperature']
+    ctl_delta = params['CTL Delta UV']
+    stack = get_stack()
+
+    return [ctl_lightness, ctl_temp, ctl_delta] == stack.mesh.rcv_status_data_get('Status')
 
 def light_ctl_temp_range_get(params):
     btp.mmdl_light_ctl_temp_range_get()
@@ -1276,7 +1289,12 @@ def light_ctl_temp_range_set_unack(params):
     return light_ctl_temp_range_set(params, False)
 
 def light_ctl_temp_range_status(params):
-    return True
+    min = params['Range Min']
+    max = params['Range Max']
+    status = params['Status Code']
+    stack = get_stack()
+
+    return [status, min, max] == stack.mesh.rcv_status_data_get('Status')
 
 def scene_get(params):
     btp.mmdl_scene_get()
@@ -1469,9 +1487,12 @@ def parse_send(params):
         0x8260: light_ctl_states_status,
         0x8261: light_ctl_temperature_get,
         0x8262: light_ctl_temp_range_get,
+        0x8263: light_ctl_temp_range_status,
         0x8264: light_ctl_temperature_set_ack,
         0x8265: light_ctl_temperature_set_unack,
+        0x8266: light_ctl_temperature_status,
         0x8267: light_ctl_default_get,
+        0x8268: light_ctl_default_status,
         0x8269: light_ctl_default_set_ack,
         0x826a: light_ctl_default_set_unack,
         0x826b: light_ctl_temp_range_set_ack,

@@ -3839,10 +3839,10 @@ def mmdl_gen_onoff_get():
 
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_onoff_get'])
 
-    hdr_fmt = '<B'
-    onoff_r, = struct.unpack_from(hdr_fmt, rsp)
+    hdr_fmt = '<BBi'
+    onoff, onoff_target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
-    stack.mesh.rcv_status_data_set("Status", [onoff_r])
+    stack.mesh.rcv_status_data_set("Status", [onoff])
     logging.debug("Status onoff = %r", stack.mesh.rcv_status_data_get('Status'))
 
 def mmdl_gen_onoff_set(onoff, tt=None, delay=None, ack=True):
@@ -3858,10 +3858,10 @@ def mmdl_gen_onoff_set(onoff, tt=None, delay=None, ack=True):
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_onoff_set'], data=data)
 
     if ack:
-        hdr_fmt = '<BB'
-        onoff_r, target_onoff = struct.unpack_from(hdr_fmt, rsp)
+        hdr_fmt = '<BBi'
+        onoff_r, target_onoff, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target_onoff])
         else:
             stack.mesh.rcv_status_data_set("Status", [onoff_r])
@@ -3875,7 +3875,7 @@ def mmdl_gen_lvl_get():
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_get'])
 
     hdr_fmt = '<hhi'
-    level, target_level, rem_time = struct.unpack_from(hdr_fmt, rsp)
+    level, target_level, remaining_time = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
     stack.mesh.rcv_status_data_set("Status", [level])
     logging.debug("Satatus level = %r", stack.mesh.rcv_status_data_get("Status"))
@@ -3894,9 +3894,9 @@ def mmdl_gen_lvl_set(lvl, tt=None, delay=None, ack=True):
 
     if ack:
         hdr_fmt = '<hhi'
-        level, target_level, rem_time = struct.unpack_from(hdr_fmt, rsp)
+        level, target_level, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target_level])
         else:
             stack.mesh.rcv_status_data_set("Status", [level])
@@ -3915,13 +3915,13 @@ def mmdl_gen_lvl_delta_set(delta, tt=None, delay=None, ack=True):
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_delta_set'], data=data)
 
     if ack:
-        hdr_fmt = '<hh'
-        delta_r, delta_target = struct.unpack_from(hdr_fmt, rsp)
+        hdr_fmt = '<hhi'
+        delta, delta_target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [delta_target])
         else:
-            stack.mesh.rcv_status_data_set("Status", [delta_r])
+            stack.mesh.rcv_status_data_set("Status", [delta])
         logging.debug("Status delta = %r", stack.mesh.rcv_status_data_get("Status"))
 
 
@@ -3938,10 +3938,10 @@ def mmdl_gen_lvl_move_set(move, tt=None, delay=None, ack=True):
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_lvl_move_set'], data=data)
 
     if ack:
-        hdr_fmt = '<hh'
-        level, target_level = struct.unpack_from(hdr_fmt, rsp)
+        hdr_fmt = '<hhi'
+        level, target_level, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target_level])
         else:
             stack.mesh.rcv_status_data_set("Status", [level])
@@ -4027,10 +4027,10 @@ def mmdl_gen_plvl_set(power_lvl, tt=None, delay=None, ack=True):
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['gen_plvl_set'], data=data)
 
     if ack:
-        hdr_fmt = '<HH'
-        present_power, target_power = struct.unpack_from(hdr_fmt, rsp)
+        hdr_fmt = '<HHi'
+        present_power, target_power, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target_power])
         else:
             stack.mesh.rcv_status_data_set('Status', [present_power])
@@ -4529,7 +4529,7 @@ def mmdl_light_lightness_set(lightness, tt=None, delay=None, ack=True):
         hdr_fmt = '<HHi'
         lightness, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [lightness])
@@ -4567,7 +4567,7 @@ def mmdl_light_lightness_linear_set(lightness_linear, tt=None, delay=None, ack=T
         hdr_fmt = '<HHi'
         lightness_linear, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [lightness_linear])
@@ -4736,7 +4736,7 @@ def mmdl_light_lc_light_onoff_mode_set(light_onoff_mode, tt=None, delay=None, ac
         hdr_fmt = '<BBi'
         light_onoff_mode, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [light_onoff_mode])
@@ -4823,7 +4823,7 @@ def mmdl_light_ctl_states_set(ctl_lightness, ctl_temperature, ctl_delta_uv, tt=N
         hdr_fmt = '<HHHHi'
         current_light, current_temp, target_light, target_temp, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target_light, target_temp])
         else:
             stack.mesh.rcv_status_data_set('Status', [current_light, current_temp])
@@ -4860,7 +4860,7 @@ def mmdl_light_ctl_temperature_set(ctl_temperature, ctl_delta_uv, tt=None, delay
         hdr_fmt = '<HHHHi'
         current_temp, current_delta, target_temp, target_delta, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target_temp, target_delta])
         else:
             stack.mesh.rcv_status_data_set('Status', [current_temp, current_delta])
@@ -4875,9 +4875,9 @@ def mmdl_light_ctl_default_get():
     (rsp,) = iutctl.btp_socket.send_wait_rsp(*MMDL['light_ctl_default_get'])
 
     hdr_fmt = '<HHh'
-    light, temp, delta = struct.unpack_from(hdr_fmt, rsp)
+    ctl_light, ctl_temp, ctl_delta = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
-    stack.mesh.rcv_status_data_set('Status', [light, temp, delta])
+    stack.mesh.rcv_status_data_set('Status', [ctl_light, ctl_temp, ctl_delta])
     logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
 
 def mmdl_light_ctl_default_set(ctl_lightness, ctl_temperature, ctl_delta_uv, ack=True):
@@ -4890,9 +4890,9 @@ def mmdl_light_ctl_default_set(ctl_lightness, ctl_temperature, ctl_delta_uv, ack
 
     if ack:
         hdr_fmt = '<HHh'
-        light, temp, delta = struct.unpack_from(hdr_fmt, rsp)
+        ctl_light, ctl_temp, ctl_delta = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        stack.mesh.rcv_status_data_set('Status', [light, temp, delta])
+        stack.mesh.rcv_status_data_set('Status', [ctl_light, ctl_temp, ctl_delta])
         logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
 
 def mmdl_light_ctl_temp_range_get():
@@ -4904,7 +4904,7 @@ def mmdl_light_ctl_temp_range_get():
     hdr_fmt = '<BHH'
     status, min, max = struct.unpack_from(hdr_fmt, rsp)
     stack = get_stack()
-    stack.mesh.rcv_status_data_set('Status', [min, max])
+    stack.mesh.rcv_status_data_set('Status', [status, min, max])
     logging.debug('Status: %r', stack.mesh.rcv_status_data_get("Status"))
 
 def mmdl_light_ctl_temp_range_set(min, max, ack=True):
@@ -4977,12 +4977,12 @@ def mmdl_scene_recall(scene_num, tt=None, delay=None, ack=True):
         hdr_fmt = '<BHHi'
         status, scene, target, remaining_time = struct.unpack_from(hdr_fmt, rsp)
         stack = get_stack()
-        if delay:
+        if remaining_time:
             stack.mesh.rcv_status_data_set("Status", [target])
         else:
             stack.mesh.rcv_status_data_set('Status', [scene])
 
-        logging.debug('Status: Scene = %r, target = %r ', stack.mesh.rcv_status_data_get("Status"), target)
+        logging.debug('Status: Scene = %r ', stack.mesh.rcv_status_data_get("Status"))
 
 def event_handler(hdr, data):
     logging.debug("%s %r %r", event_handler.__name__, hdr, data)
