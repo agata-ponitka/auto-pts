@@ -671,6 +671,12 @@ def test_cases(ptses):
                   generic_wid_hdl=mesh_wid_hdl),
         ZTestCase("MESH", "MESH/CFGCL/CFG/LPNPT/BV-01-C", cmds=pre_conditions,
                   generic_wid_hdl=mesh_wid_hdl),
+        ZTestCase("MESH", "MESH/CL/HM/RFS/BV-01-C", cmds=pre_conditions,
+                  generic_wid_hdl=mesh_wid_hdl),
+        ZTestCase("MESH", "MESH/CL/HM/HPS/BV-01-C", cmds=pre_conditions,
+                  generic_wid_hdl=mesh_wid_hdl),
+        ZTestCase("MESH", "MESH/CL/HM/ATS/BV-01-C", cmds=pre_conditions,
+                  generic_wid_hdl=mesh_wid_hdl),
     ]
 
     if len(ptses) < 2:
