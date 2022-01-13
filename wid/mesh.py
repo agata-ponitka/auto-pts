@@ -79,6 +79,24 @@ def hdl_wid_6(desc):
                  click Cancel.
     :return:
     """
+    stack = get_stack()
+    attention_duration = 0x00
+
+    if not stack.mesh.is_initialized:
+        btp.mesh_config_prov()
+        btp.mesh_init()
+
+        if stack.mesh.iut_is_provisioner:
+            btp.mesh_prov_node()
+
+    if stack.mesh.iut_is_provisioner:
+        if not stack.mesh.is_prov_adv:
+            btp.mesh_provision_adv(stack.mesh.dev_uuid, stack.mesh.addr, attention_duration)
+        else:
+            stack.mesh.wait_for_prov_link_close(90)
+            stack.mesh.address_lt2 = stack.mesh.addr + 1
+            btp.mesh_provision_adv(stack.mesh.dev_uuid, stack.mesh.address_lt2, attention_duration)
+
     return True
 
 
@@ -128,6 +146,9 @@ def hdl_wid_12(desc):
         btp.mesh_config_prov()
         btp.mesh_init()
 
+        if stack.mesh.iut_is_provisioner:
+            btp.mesh_prov_node()
+
     return True
 
 
@@ -136,7 +157,7 @@ def hdl_wid_13(desc):
     Implements: RE_PROVISIONING_PROVISIONER
     :param desc: There is no shared security information. Please remove any
                  security information if any. PTS is waiting for beacon to
-                 start provisioning from
+                 start provisioning from IUT with UUID value indicated in 'TSPX_device_uuid'
     :return:
     """
     stack = get_stack()
@@ -248,9 +269,36 @@ def hdl_wid_21(desc):
 def hdl_wid_22(desc):
     """
     Implements:
-    :param desc: Please bind an AppKey to a Model Id = 2 for the testing.
+    :param desc: Please bind an AppKey to a Model Id = %d for the testing.
     :return:
     """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    pattern = re.compile(
+        r'(Model\sId)\s=\s+([0-9a-fA-F]+)')
+    params = pattern.findall(desc)
+    if not params:
+        logging.error("%s parsing error", hdl_wid_22.__name__)
+        return
+
+    params = dict(params)
+
+    model_id = int(params.get('Model Id'), 16)
+    app_key_idx = 0x0000
+
+    if stack.mesh.address_lt2:
+        btp.mesh_cfg_model_app_bind(stack.mesh.net_idx, stack.mesh.address_lt2, stack.mesh.el_address, app_key_idx,
+                                    model_id)
+    else:
+        btp.mesh_cfg_model_app_bind(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, app_key_idx,
+                                model_id)
+
+        btp.mesh_cfg_model_app_bind(stack.mesh.net_idx, stack.mesh.address, stack.mesh.el_address, app_key_idx,
+                                model_id)
+
     return True
 
 
@@ -369,6 +417,38 @@ def hdl_wid_31(desc):
     return False
 
 
+def hdl_wid_33(desc):
+    """
+    Implements:
+    :param desc: 'Please start create link and provisioning.
+                  PTS will broadcast unprovisioned device beacon with UUID = TSPX_device_uuid value"
+    :return:
+    """
+    stack = get_stack()
+    uuid = stack.mesh.dev_uuid
+    addr = 0x0002
+    attention_duration = 0x00
+
+    if not stack.mesh.is_initialized:
+        btp.mesh_config_prov()
+        btp.mesh_init()
+
+        if stack.mesh.iut_is_provisioner:
+            btp.mesh_prov_node()
+
+    btp.mesh_provision_adv(uuid, addr, attention_duration)
+    return True
+
+
+def hdl_wid_34(desc):
+    """
+    Implements:
+    :param desc: 'Please confirm IUT did not receive link ack so it will fail. Click Yes if it is not received. Otherwise click No.'
+    :return:
+    """
+    return True
+
+
 def hdl_wid_35(desc):
     """
     Implements: CONFIRM_TRANSPORT_DATA
@@ -440,7 +520,7 @@ def hdl_wid_37(desc):
     """
     stack = get_stack()
 
-    return stack.mesh.wait_for_attention_timer_exp(90)
+    return stack.mesh.wait_for_prov_link_close(90)
 
 
 def hdl_wid_38(desc):
@@ -750,6 +830,17 @@ def hdl_wid_210(desc):
     return False
 
 
+def hdl_wid_212(desc):
+    """
+    Implements:
+    :param desc: This is Lower Tester 2 which is in the reject list filter and
+                 should not receive any update. Click OK to continue monitoring
+                 for any beacon until timeout.
+    :return:
+    """
+    return True
+
+
 def hdl_wid_216(desc):
     """
     Implements: IUT_GENERATE_SECURE_NETWORK_BEACON_LESS96
@@ -878,6 +969,31 @@ def hdl_wid_255(desc):
     return True
 
 
+def hdl_wid_260(desc):
+    """
+    Implements:
+    :param desc: Please start another PTS and run Lower Tester 2 test case which
+                 is the node that has been rejected and set the correct TSPX_device_uuid
+                 value for tester 2 which is different than the Lower Tester 1.
+                 Please have the IUT provision both testers to share the same network
+                 security credentials. Click OK when ready.
+    :return:
+    """
+    return True
+
+
+def hdl_wid_261(desc):
+    """
+    Implements:
+    :param desc: This is Lower Tester 2 acting as a node that has been rejected.
+                 Please set the correct TSPX_device_uuid value before running this
+                 test case for IUT to start provisioning these two testers to share
+                 the same network security credential. Click OK when ready.
+    :return:
+    """
+    return True
+
+
 def hdl_wid_262(desc):
     """
     Implements: KEY_REFRESH_READY_FOR_ROUND2
@@ -907,6 +1023,56 @@ def hdl_wid_268(desc):
     return True
 
 
+def hdl_wid_269(desc):
+    """
+    Implements:
+    :param desc: This is Lower Tester 2 which will not receive any update.
+                 Please wait until IUT finishes the Key Refresh procedure with Lower Tester 1,
+                 and then click OK for Lower Tester 2 to send a Mesh message.
+    :return:
+    """
+    return True
+
+
+def hdl_wid_270(desc):
+    """
+    Implements:
+    :param desc: Please confirm that IUT ignores the sent Mesh message
+    :return:
+    """
+    return True
+
+
+def hdl_wid_271(desc):
+    """
+    Implements:
+    :param desc: Please confirm that Lower Tester 2 did not receive any secure beacons
+    :return:
+    """
+    stack = get_stack()
+    return True
+
+
+def hdl_wid_272(desc):
+    """
+    Implements:
+    :param desc: Please send a Mesh message from Lower Tester 2 to IUT.
+                 Confirm that IUT ignores the message from Lower Tester 2
+    :return:
+    """
+    stack = get_stack()
+    return True
+
+
+def hdl_wid_273(desc):
+    """
+    Implements:
+    :param desc: Please confirm that IUT received a Mesh message, NID: 0x37
+    :return:
+    """
+    stack = get_stack()
+    return True
+
 def hdl_wid_274(desc):
     """
     Implements: KEY_REFRESH_WAIT_FOR_INVALID_MSG
@@ -914,6 +1080,89 @@ def hdl_wid_274(desc):
                  See Output Log for details
     :return:
     """
+    return True
+
+
+def hdl_wid_275(desc):
+    """
+    Implements:
+    :param desc: Please send Config Key Refresh Phase Get.
+    :return:
+    """
+    stack = get_stack()
+
+    btp.mesh_cfg_krp_get(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index)
+
+    return stack.mesh.status == 0x00 and stack.mesh.data == 0x00
+
+
+def hdl_wid_276(desc):
+    """
+    Implements:
+    :param desc: Please send NetKey Update.
+    :return:
+    """
+    stack = get_stack()
+
+    net_key_idx = 0x0000
+    net_key = '00000000000000000000000000000001'
+
+    btp.mesh_cfg_netkey_update(stack.mesh.net_idx, stack.mesh.addr, net_key, net_key_idx)
+    btp.mesh_cfg_netkey_update(stack.mesh.net_idx, stack.mesh.address, net_key, net_key_idx)
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_277(desc):
+    """
+    Implements:
+    :param desc: Please send AppKey Update.
+    :return:
+    """
+    stack = get_stack()
+
+    app_key_up = '00000000000000000000000000000001'
+    app_key_idx = 0x0000
+
+    btp.mesh_cfg_appkey_update(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key_up,
+                               app_key_idx)
+    btp.mesh_cfg_appkey_update(stack.mesh.net_idx, stack.mesh.address, stack.mesh.net_key_index, app_key_up,
+                               app_key_idx)
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_278(desc):
+    """
+    Implements:
+    :param desc: Waiting for Secure Network Beacon with Key Refresh On and Iv Update Off.
+    :return:
+    """
+    stack = get_stack()
+    phase = 0x02
+    net_key_index = 0x0000
+    net_idx = 0x0000
+
+    btp.mesh_cfg_krp_set(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, phase)
+    btp.mesh_cfg_krp_set(net_idx, stack.mesh.address, net_key_index, phase)
+
+    return True
+
+
+def hdl_wid_279(desc):
+    """
+    Implements:
+    :param desc: Waiting for Secure Network Beacon with Key Refresh Off and Iv Update Off.
+    :return:
+    """
+    stack = get_stack()
+    phase = 0x03
+    net_key_index = 0x0000
+    net_idx = 0x0000
+
+    btp.mesh_cfg_krp_set(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, phase)
+    btp.mesh_cfg_krp_set(net_idx, stack.mesh.address, net_key_index, phase)
+
     return True
 
 
@@ -972,6 +1221,54 @@ def hdl_wid_285(desc):
     :return:
     """
     return True
+
+
+def hdl_wid_286(desc):
+    """
+    Implements:
+    :param desc: Waiting for Config Key Refresh Phase Set message with Phase Set to 0x02.
+    :return:
+    """
+    stack = get_stack()
+    pattern = re.compile(
+        r'(Phase)\sSet\sto\s+([0][xX][0-9a-fA-F]+)')
+    params = pattern.findall(desc)
+    if not params:
+        logging.error("%s parsing error", hdl_wid_286.__name__)
+        return
+    params = dict(params)
+
+    phase = int(params.get('Phase'), 16)
+    net_key_index = 0x0000
+
+    btp.mesh_cfg_krp_set(stack.mesh.net_idx, stack.mesh.addr, net_key_index, phase)
+    btp.mesh_cfg_krp_set(stack.mesh.net_idx, stack.mesh.address, net_key_index, phase)
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_287(desc):
+    """
+    Implements:
+    :param desc: Waiting for Config Key Refresh Phase Set message with Phase Set to 0x03.
+    :return:
+    """
+    stack = get_stack()
+    pattern = re.compile(
+        r'(Phase)\sSet\sto\s+([0][xX][0-9a-fA-F]+)')
+    params = pattern.findall(desc)
+    if not params:
+        logging.error("%s parsing error", hdl_wid_286.__name__)
+        return
+    params = dict(params)
+
+    phase = int(params.get('Phase'), 16)
+    net_key_index = 0x0000
+
+    btp.mesh_cfg_krp_set(stack.mesh.net_idx, stack.mesh.addr, net_key_index, phase)
+    btp.mesh_cfg_krp_set(stack.mesh.net_idx, stack.mesh.address, net_key_index, phase)
+
+    return stack.mesh.status == 0x00
 
 
 def hdl_wid_302(desc):
@@ -1398,10 +1695,689 @@ def hdl_wid_372(desc):
     return True
 
 
+def hdl_wid_373(desc):
+    """
+    Implements:
+    :param desc: Received Node Identity.Wait for 60 seconds.After that, IUT expect to stop advertising Node Identity
+    :return:
+    """
+    return True
+
+
 def hdl_wid_500(desc):
     """
     Implements:
     :param desc: Waiting for Composition Data Get Request.
+    :return:
+    """
+    stack = get_stack()
+    page = 0x00
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    if stack.mesh.address_lt2:
+        btp.mesh_composition_data_get(stack.mesh.net_idx, stack.mesh.address_lt2, page)
+    else:
+        btp.mesh_composition_data_get(stack.mesh.net_idx, stack.mesh.addr, page)
+
+    return True
+
+
+def hdl_wid_501(desc):
+    """
+    Implements:
+    :param desc: Send Config Beacon Get.
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    btp.mesh_cfg_beacon_get(stack.mesh.net_idx, stack.mesh.addr)
+
+    return True
+
+
+def hdl_wid_502(desc):
+    """
+    Implements:
+    :param desc: Please send Config Beacon Set with 0.
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    pattern = re.compile(r'with\s+([0-9a-fA-F]+)')
+    val = pattern.findall(desc)
+    if not val:
+        logging.error("%s parsing error", hdl_wid_502.__name__)
+        return False
+
+    btp.mesh_cfg_beacon_set(stack.mesh.net_idx, stack.mesh.addr, int(val[0], 16))
+
+    return stack.mesh.status == int(val[0], 16)
+
+
+def hdl_wid_503(desc):
+    """
+    Implements:
+    :param desc: Please send Config Beacon Set with 1.
+    :return:
+    """
+    return hdl_wid_502(desc)
+
+
+def hdl_wid_504(desc):
+    """
+    Implements:
+    :param desc: Please send Config Default TTL Get.
+    :return:mesh_model_send
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    btp.mesh_cfg_default_ttl_get(stack.mesh.net_idx, stack.mesh.addr)
+
+    return True
+
+
+def hdl_wid_505(desc):
+    """
+    Implements:
+    :param desc: Please send Config Default TTL Set.
+    :return:mesh_model_send
+    """
+    stack = get_stack()
+    val = 0x00
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    btp.mesh_cfg_default_ttl_set(stack.mesh.net_idx, stack.mesh.addr, val)
+    return True
+
+
+def hdl_wid_506(desc):
+    """
+    Implements:
+    :param desc: Please confirm the TTL value = 0x0.
+    :return:mesh_model_send
+    """
+    stack = get_stack()
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_507(desc):
+    """
+    Implements:
+    :param desc: Please send Config Friend Get.
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    btp.mesh_cfg_friend_get(stack.mesh.net_idx, stack.mesh.addr)
+    return True
+
+
+def hdl_wid_508(desc):
+    """
+    Implements:
+    :param desc: Please send Config Friend Set.
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    val = 0x00
+
+    btp.mesh_cfg_friend_set(stack.mesh.net_idx, stack.mesh.addr, val)
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_509(desc):
+    """
+    Implements:
+    :param desc: Please confirm the [...] value = 0x0.
+    :return:
+    """
+    stack = get_stack()
+
+    pattern = re.compile(r'value\s=\s+([0-9a-fA-F]+)')
+    val = pattern.findall(desc)
+    if not val:
+        logging.error("%s parsing error", hdl_wid_509.__name__)
+        return False
+
+    return stack.mesh.status == int(val[0], 16)
+
+
+def hdl_wid_510(desc):
+    """
+    Implements:
+    :param desc: Heartbeat Publication Set
+    :return:
+    """
+
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    pattern = re.compile(r'(Destination|CountLog|PeriodLog|TTL|Features)\sfield set to\s+([0][xX][0-9a-fA-F]+)')
+    params = pattern.findall(desc)
+    if not params:
+        logging.error("%s parsing error", hdl_wid_510.__name__)
+        return False
+    params = dict(params)
+
+    destination = int(params.get('Destination'), 16)
+    count_log = int(params.get('CountLog'), 16)
+    period_log = int(params.get('PeriodLog'), 16)
+    ttl = int(params.get('TTL'), 16)
+    features = int(params.get('Features'), 16)
+
+    btp.mesh_cfg_heartbeat_pub_set(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, destination,
+                                   count_log, period_log, ttl, features)
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_511(desc):
+    """
+    Implements:
+    :param desc: Heartbeat Publication Get
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    btp.mesh_cfg_heartbeat_pub_get(stack.mesh.net_idx, stack.mesh.addr)
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_514(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    if "Config GATT Proxy Get" in desc:
+        btp.mesh_cfg_gatt_proxy_get(stack.mesh.net_idx, stack.mesh.addr)
+        return True
+
+    if "Config GATT Proxy Set" in desc:
+        val = 0x00
+        btp.mesh_cfg_gatt_proxy_set(stack.mesh.net_idx, stack.mesh.addr, val)
+        return True
+
+    if "Config Model Subscription" in desc:
+        sub_address = 0x0002
+        model_id = 0x0000
+
+        if "Virtual Address Add" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, int(stack.mesh.dev_uuid, 16), model_id]
+
+            btp.mesh_cfg_model_sub_va_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, model_id,
+                                          stack.mesh.dev_uuid)
+            return stack.mesh.status == 0x00
+
+        if "Virtual Address Delete" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, int(stack.mesh.dev_uuid, 16), model_id]
+
+            btp.mesh_cfg_model_sub_va_del(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, model_id,
+                                          stack.mesh.dev_uuid)
+            return stack.mesh.status == 0x00
+
+        if "Virtual Address Overwrite" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, int(stack.mesh.dev_uuid, 16), model_id]
+
+            btp.mesh_cfg_model_sub_va_ovw(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, model_id,
+                                          stack.mesh.dev_uuid)
+            return stack.mesh.status == 0x00
+
+        if "Add" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, sub_address, model_id]
+
+            btp.mesh_cfg_model_sub_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, sub_address,
+                                       model_id)
+            return stack.mesh.status == 0x00
+
+        if "Delete All" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, model_id]
+
+            btp.mesh_cfg_model_sub_del_all(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, model_id)
+            return stack.mesh.status == 0x00
+
+        if "Delete" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, sub_address, model_id]
+
+            btp.mesh_cfg_model_sub_del(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, sub_address,
+                                       model_id)
+            return stack.mesh.status == 0x00
+
+        if "Overwrite" in desc:
+            stack.mesh.model_data = [stack.mesh.el_address, sub_address, model_id]
+
+            btp.mesh_cfg_model_sub_ovw(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, sub_address,
+                                       model_id)
+            return stack.mesh.status == 0x00
+
+    if "Config Vendor Model Subscription Get" in desc:
+        model_id = 0x1234
+        cid = 0x05F1
+        el_address = 0x0001
+        stack.mesh.model_data = [el_address, cid | model_id << 16]
+
+        btp.mesh_cfg_model_sub_vnd_get(stack.mesh.net_idx, stack.mesh.addr, el_address, model_id, cid)
+        return stack.mesh.status == 0x00
+
+    if "Config SIG Model Subscription Get " in desc:
+        model_id = 0x0001
+        el_address = 0x0001
+        stack.mesh.model_data = [el_address, model_id]
+
+        btp.mesh_cfg_model_sub_get(stack.mesh.net_idx, stack.mesh.addr, el_address, model_id)
+        return stack.mesh.status == 0x00
+
+    if "AppKey Add" in desc:
+        app_key = '0123456789abcdef0123456789fedcba'
+        app_key_idx = 0x0001
+
+        stack.mesh.model_data = [stack.mesh.net_key_index, app_key_idx, hex(int(app_key, 16))]
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key, app_key_idx)
+        return stack.mesh.status == 0x00
+
+    if "AppKey Update" in desc:
+        app_key = '0123456789abcdef0123456789fedcba'
+        app_key_up = '0123456789abcdef0123456789fedcbc'
+        app_key_idx = 0x0001
+
+        stack.mesh.model_data = [stack.mesh.net_key_index, app_key_idx, int(app_key_up, 16)]
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key, app_key_idx)
+        btp.mesh_cfg_appkey_update(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key_up,
+                                   app_key_idx)
+        logging.debug("Status = 0x%2x", stack.mesh.status)
+        return True  # status is not checked because PTS returned status != 0x00
+
+    if "AppKey Delete" in desc:
+        pattern = re.compile(r'(NetKey\sindex|AppKey\sindex)\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_514.__name__)
+            return False
+        params = dict(params)
+
+        net_key_idx = int(params.get('NetKey index'), 16)
+        app_key_idx = int(params.get('AppKey index'), 16)
+
+        btp.mesh_cfg_appkey_del(stack.mesh.net_idx, stack.mesh.addr, net_key_idx, app_key_idx)
+
+        logging.debug("Status = 0x%2x", stack.mesh.status)
+        return True  # status is not checked because PTS returned status != 0x00
+
+    if "AppKey Get" in desc:
+        pattern = re.compile(r'(NetKey\sindex)\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_514.__name__)
+            return False
+        params = dict(params)
+
+        net_key_idx = int(params.get('NetKey index'), 16)
+
+        btp.mesh_cfg_appkey_get(stack.mesh.net_idx, stack.mesh.addr, net_key_idx)
+        logging.debug("Status = 0x%2x", stack.mesh.status)
+        return True  # status is not checked because PTS returned status != 0x00
+
+    if "Model App Bind" in desc:
+        app_key_idx = 0x0000
+        model_id = 0x0002
+        app_key = '0123456789abcdef0123456789fedcba'
+
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key, app_key_idx)
+
+        btp.mesh_cfg_model_app_bind(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, app_key_idx,
+                                       model_id)
+
+        stack.mesh.model_data = [stack.mesh.el_address, app_key_idx, model_id]
+
+        return stack.mesh.status == 0x00
+
+    if "Model App Unbind" in desc:
+        app_key_idx = 0x0000
+        model_id = 0x0002
+        app_key = '0123456789abcdef0123456789fedcba'
+
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key, app_key_idx)
+        btp.mesh_cfg_model_app_bind(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, app_key_idx,
+                                       model_id)
+        stack.mesh.model_data = [stack.mesh.el_address, app_key_idx, model_id]
+
+        btp.mesh_cfg_model_app_unbind(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, app_key_idx,
+                                         model_id)
+
+        return stack.mesh.status == 0x00
+
+    if "SIG Model App Get" in desc:
+        model_id = 0x0002
+        stack.mesh.model_data = [stack.mesh.el_address, model_id]
+
+        btp.mesh_cfg_model_app_get(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, model_id)
+
+        return stack.mesh.status == 0x00
+
+    if "Vendor Model App Get" in desc:
+        model_id = 0x1234
+        cid = 0x05F1
+        stack.mesh.model_data = [stack.mesh.el_address, model_id, cid]
+
+        btp.mesh_cfg_model_app_vnd_get(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.el_address, model_id, cid)
+
+        return True
+
+    if "Network Transmit Get" in desc:
+        btp.mesh_cfg_net_transmit_get(stack.mesh.net_idx, stack.mesh.addr)
+
+        return True
+
+    if "Network Transmit Set" in desc:
+        transmit = 0x01
+
+        btp.mesh_cfg_net_transmit_set(stack.mesh.net_idx, stack.mesh.addr, transmit)
+
+        return True
+
+    if "Node Identity Set" in desc:
+        pattern = re.findall(r'\s+([0-9a-fA-F]+)', desc)
+        identity = int(pattern[0], 16)
+
+        btp.mesh_cfg_node_idt_set(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, identity)
+
+        return stack.mesh.status == 0x00 and stack.mesh.model_data == identity
+
+    if "Node Identity Get" in desc:
+        identity = 0x01
+
+        btp.mesh_cfg_node_idt_get(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index)
+
+        return stack.mesh.status == 0x00 and stack.mesh.model_data == identity
+
+    if "Low Power Node PollTimeout Get" in desc:
+        pattern = re.compile(r'(address)\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_514.__name__)
+            return False
+        params = dict(params)
+
+        unicast_addr = int(params.get('address'), 16)
+
+        btp.mesh_cfg_lpn_polltimeout_get(stack.mesh.net_idx, stack.mesh.addr, unicast_addr)
+
+        return True
+
+    else:
+        return False
+
+
+def hdl_wid_515(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    if "Model App Bind" in desc or r"Model App Unbind" in desc:
+        pattern = re.compile(r'(Element\sAddress|AppKey\sIndex|SIG\sModel\sID)\s=\s+([0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_515.__name__)
+            return False
+        params = dict(params)
+
+        el_address = int(params.get('Element Address'), 16)
+        mod_app_idx = int(params.get('AppKey Index'), 16)
+        model_id = int(params.get('SIG Model ID'), 16)
+
+        return stack.mesh.model_data == [el_address, mod_app_idx, model_id]
+
+    if "SIG Model App Get" in desc:
+        pattern = re.compile(r'(Element\sAddress|SIG\sModel\sID)\s=\s+([0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_515.__name__)
+            return False
+        params = dict(params)
+
+        el_address = int(params.get('Element Address'))
+        model_id = int(params.get('SIG Model ID'))
+
+        return stack.mesh.model_data == [el_address, model_id]
+
+    if "AppKey Add" in desc:
+        pattern = re.compile(r'(NetKeyIndex|AppKeyIndex|AppKey)\s=\s+([0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_515.__name__)
+            return False
+        params = dict(params)
+
+        net_key_idx = int(params.get('NetKeyIndex'), 16)
+        app_key_idx = int(params.get('AppKeyIndex'), 16)
+        app_key = hex(int(params.get('AppKey'), 16))
+
+        return [net_key_idx, app_key_idx, app_key] == stack.mesh.model_data
+
+    if "Vendor Model App Get" in desc:
+        pattern = re.compile(r'(Element\sAddress|Vendor\sModel\sID)\s=\s+([0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_515.__name__)
+            return False
+        params = dict(params)
+
+        el_addr = int(params.get('Element Address'))
+        cid = int(params.get('Vendor Model ID')[4:], 16)
+        model_id = int(params.get('Vendor Model ID')[:4], 16)
+
+        return [el_addr, model_id, cid] == stack.mesh.model_data
+
+    if "AppKey Update" in desc:
+        pattern = re.compile(r'(NetKeyIndex|AppKeyIndex|AppKey)\s=\s+([0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_515.__name__)
+            return False
+        params = dict(params)
+
+        net_key_index = int(params.get('NetKeyIndex'))
+        app_key_idx = int(params.get('AppKeyIndex'), 16)
+        app_key_up = int(params.get('AppKey'), 16)
+
+        return [net_key_index, app_key_idx, app_key_up] == stack.mesh.model_data
+
+
+def parse_params(desc):
+    field_dict = {}
+    txt = desc.splitlines()[1:]
+    for line in txt:
+        line = line.strip()
+        fields = line.split(': ', 1)
+        if len(fields) < 2:
+            continue
+        field_name = fields[0]
+        m = re.search(r"\[([\-A-Fa-f0-9x\(\) ]+)\]", fields[1])
+        if not m:
+            field_dict[field_name] = None
+            continue
+        value = m.group(1)
+
+        m = re.search(r"\(([A-Fa-f0-9x]+)\)", value)
+        if not m:
+            field_dict[field_name] = int(value, 16)
+            continue
+
+        hex_value = m.group(1)
+        field_dict[field_name] = int(hex_value, 16)
+
+    return field_dict
+
+
+def confirm_cfg_model_subscription_add(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+    sub_address = params['Address']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, sub_address, model_id]
+
+
+def confirm_cfg_model_subscription_del(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+    sub_address = params['Address']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, sub_address, model_id]
+
+
+def confirm_cfg_model_subscription_overwrite(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+    sub_address = params['Address']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, sub_address, model_id]
+
+
+def confirm_cfg_model_subscription_del_all(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, model_id]
+
+
+def confirm_cfg_model_subscription_get(params):
+    model_id = params['SIG Model Identifier']
+    el_address = params['ElementAddress']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, model_id]
+
+
+def confirm_cfg_model_subscription_va_add(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+    address_uuid = params['AddressUUID']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, address_uuid, model_id]
+
+
+def confirm_cfg_model_subscription_va_del(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+    address_uuid = params['AddressUUID']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, address_uuid, model_id]
+
+
+def confirm_cfg_model_subscription_va_ovw(params):
+    model_id = params['Model Identifier']
+    el_address = params['ElementAddress']
+    address_uuid = params['AddressUUID']
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, address_uuid, model_id]
+
+
+def confirm_cfg_model_subscription_get_vnd(params):
+    el_address = params['ElementAddress']
+    vnd_model_id = int(params.get('Vendor Model Identifier'))
+
+    stack = get_stack()
+
+    return stack.mesh.model_data == [el_address, vnd_model_id]
+
+
+def parse_send(params):
+    opcode = params['Op Code']
+    cmds = {
+        0x801B: confirm_cfg_model_subscription_add,
+        0x801C: confirm_cfg_model_subscription_del,
+        0x801E: confirm_cfg_model_subscription_overwrite,
+        0x801D: confirm_cfg_model_subscription_del_all,
+        0x8029: confirm_cfg_model_subscription_get,
+        0x8020: confirm_cfg_model_subscription_va_add,
+        0x8021: confirm_cfg_model_subscription_va_del,
+        0x8022: confirm_cfg_model_subscription_va_ovw,
+        0x802B: confirm_cfg_model_subscription_get_vnd,
+    }
+
+    if opcode not in cmds:
+        return False
+
+    return cmds[opcode](params)
+
+
+def hdl_wid_516(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    params = parse_params(desc)
+    log("%r", params)
+
+    return parse_send(params)
+
+
+def hdl_wid_517(desc):
+    """
+    Implements:
+    :param desc: Please confirm the received messages are correct.
     :return:
     """
     return True
@@ -1413,7 +2389,20 @@ def hdl_wid_518(desc):
     :param desc: Please send AppKey Add.
     :return:
     """
-    return True
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    app_key = '0123456789abcdef0123456789fedcba'
+    app_key_idx = 0x0000
+    if stack.mesh.address_lt2:
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.address_lt2, stack.mesh.net_key_index, app_key,
+                                app_key_idx)
+    else:
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key, app_key_idx)
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.address, stack.mesh.net_key_index, app_key, app_key_idx)
+    return stack.mesh.status == 0x00
 
 
 def hdl_wid_519(desc):
@@ -1449,6 +2438,107 @@ def hdl_wid_521(desc):
     return True
 
 
+def hdl_wid_527(desc):
+    """
+    Implements:
+    :param desc: Please click Yes if TSPX_iut_model_id_used supports periodic publishing.
+    :return:
+    """
+    return True
+
+
+def hdl_wid_528(desc):
+    """
+    Implements:
+    :param desc: Please click Yes if Please click Yes if TSPX_iut_model_id_used supports publishing on state change.
+    :return:
+    """
+    return True
+
+
+def hdl_wid_529(desc):
+    """
+    Implements:
+    :param desc: Please triggered state change that will generate publish message.
+    :return:
+    """
+    return True
+
+
+def hdl_wid_522(desc):
+    """
+    Implements:
+    :param desc:Please send a Composition Data Get Request for page 0xff or the highest supported page number
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    pattern = re.compile(r'page\s+([0][xX][0-9a-fA-F]+)')
+    val = pattern.findall(desc)
+    if not val:
+        logging.error("%s parsing error", hdl_wid_522.__name__)
+        return False
+    page = int(val[0], 16)
+
+    btp.mesh_composition_data_get(stack.mesh.net_idx, stack.mesh.addr, page)
+
+    return True
+
+
+def hdl_wid_550(desc):
+    """
+    Implements:
+    :param desc: Please send Heartbeat Subscription Set message to the Lower Tester
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    pattern = re.compile(r'(Source|Destination)=+([0][xX][0-9a-fA-F]+)')
+    params = pattern.findall(desc)
+    if not params:
+        logging.error("%s parsing error", hdl_wid_550.__name__)
+        return False
+    params = dict(params)
+
+    source = int(params.get('Source'), 16)
+    destination = int(params.get('Destination'), 16)
+
+    pattern = re.compile(r'(PeriodLog)\sset to\s+([0][xX][0-9a-fA-F]+)')
+    params = pattern.findall(desc)
+    if not params:
+        logging.error("%s parsing error", hdl_wid_550.__name__)
+        return False
+    params = dict(params)
+
+    period_log = int(params.get('PeriodLog'), 16)
+
+    btp.mesh_cfg_heartbeat_sub_set(stack.mesh.net_idx, stack.mesh.addr, source, destination, period_log)
+
+    return stack.mesh.status == 0x00
+
+
+def hdl_wid_551(desc):
+    """
+    Implements:
+    :param desc: Please send Heartbeat Subscription Get to the Lower Tester - PTS.
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    btp.mesh_cfg_heartbeat_sub_get(stack.mesh.net_idx, stack.mesh.addr)
+
+    return stack.mesh.status == 0x00
+
+
 def hdl_wid_552(desc):
     """
     Implements:
@@ -1461,6 +2551,24 @@ def hdl_wid_552(desc):
     :return:
     """
     return True
+
+
+def hdl_wid_555(desc):
+    """
+    Implements:
+    :param desc: Please send Heartbeat Subscription Set message to the Lower Tester
+    :return:
+    """
+    return hdl_wid_550(desc)
+
+
+def hdl_wid_556(desc):
+    """
+    Implements:
+    :param desc:  Please send Heartbeat Subscription Set message to the Lower Tester
+    :return:
+    """
+    return hdl_wid_550(desc)
 
 
 def hdl_wid_557(desc):
@@ -1619,6 +2727,119 @@ def hdl_wid_604(desc):
     return True
 
 
+def hdl_wid_605(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    if "Health Fault Get" in desc:
+        pattern = re.compile(r'(Company\sID)\s=\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_605.__name__)
+            return False
+        params = dict(params)
+
+        cid = int(params.get('Company ID'), 16)
+
+        btp.mesh_health_fault_get(stack.mesh.addr, stack.mesh.app_idx, cid)
+        return True
+
+    if "Health Fault Clear" in desc:
+        pattern = re.compile(r'(Company\sID)\s=\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_605.__name__)
+            return False
+        params = dict(params)
+
+        cid = int(params.get('Company ID'), 16)
+        ack = True
+
+        if "Unreliable" in desc:
+            ack = False
+
+        btp.mesh_health_fault_clear(stack.mesh.addr, stack.mesh.app_idx, cid, ack)
+
+        return (not ack) or (ack and stack.mesh.model_data == 0x00)
+
+    if "Health Fault Test" in desc:
+        pattern = re.compile(r'(Test\sID|Company\sID)\s=\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_605.__name__)
+            return False
+        params = dict(params)
+
+        cid = int(params.get('Company ID'), 16)
+
+        pattern = re.compile(r'(Test\sID|Company\sID)\s=\s+([0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_605.__name__)
+            return False
+        params = dict(params)
+
+        test_id = int(params.get("Test ID"))
+
+        ack = True
+        if "Unreliable" in desc:
+            ack = False
+
+        btp.mesh_health_fault_test(stack.mesh.addr, stack.mesh.app_idx, cid, test_id, ack)
+
+        return (not ack) or (ack and stack.mesh.model_data == [test_id, cid])
+
+    if "Health Period Get" in desc:
+        btp.mesh_health_period_get(stack.mesh.addr, stack.mesh.app_idx)
+        return True
+
+    if "Health Period Set" in desc:
+        devisor = 0x01
+        ack = True
+
+        if "Unreliable" in desc:
+            ack = False
+
+        btp.mesh_health_period_set(stack.mesh.addr, stack.mesh.app_idx, devisor, ack)
+
+        return (not ack) or (ack and stack.mesh.model_data == devisor)
+
+    if "Attention Get" in desc:
+        btp.mesh_health_attention_get(stack.mesh.addr, stack.mesh.app_idx)
+        return True
+
+    if "Attention Set" in desc:
+        attention = 0x01
+        ack = True
+
+        if "Unreliable" in desc:
+            ack = False
+
+        btp.mesh_health_attention_set(stack.mesh.addr, stack.mesh.app_idx, attention, ack)
+        return True
+
+
+def hdl_wid_606(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    stack = get_stack()
+
+    return stack.mesh.model_data == 1
+
 def hdl_wid_625(desc):
     """
     Implements: NETKEY_REDUCE_RESOURCES
@@ -1629,6 +2850,147 @@ def hdl_wid_625(desc):
 
     logging.debug("CONFIG_BT_MESH_SUBNET_COUNT=1")
     return True
+
+
+def hdl_wid_626(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    return True
+
+
+def hdl_wid_650(desc):
+    """
+    Implements:
+    :param desc:
+    :return:
+    """
+    stack = get_stack()
+
+    if not stack.mesh.iut_is_provisioner:
+        return True
+
+    if "Config Relay Get" in desc:
+        btp.mesh_cfg_relay_get(stack.mesh.net_idx, stack.mesh.addr)
+        return True
+
+    if "Config Relay Set" in desc:
+        new_relay = 0x00
+        new_transmit = 0x00
+        btp.mesh_cfg_relay_set(stack.mesh.net_idx, stack.mesh.addr, new_relay, new_transmit)
+        return True
+
+    if "Config Model Publication GET" in desc:
+        pattern = re.compile(r'(Element\sAddress|Model\sId)\s=\s+([0][xX][0-9a-fA-F]+)')
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_650.__name__)
+            return False
+        params = dict(params)
+
+        el_address = int(params.get('Element Address'), 16)
+        model_id = int(params.get('Model Id'), 16)
+
+        btp.mesh_cfg_model_publication_get(stack.mesh.net_idx, stack.mesh.addr, el_address, model_id)
+        return stack.mesh.status == 0x00
+
+    if "Config Model Publication SET" in desc:
+        pattern = re.compile(r'(Element\sAddress|Publish\sAddress|AppKey\sIndex|Credential\sFlag|RFU|Publish\sTTL|Publish\sPeriod|'
+                             r'ModelId)\s=\s+([0-9a-fA-F]+)')
+
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_650.__name__)
+            return False
+        params = dict(params)
+
+        el_address = int(params.get('Element Address'), 16)
+        pub_addr = int(params.get('Publish Address'), 16)
+        appkey_index = int(params.get('AppKey Index'), 16)
+        cred_flag = int(params.get('Credential Flag'), 16)
+        ttl = int(params.get('Publish TTL'), 16)
+        period = int(params.get('Publish Period'), 16)
+        model_id = int(params.get('ModelId'), 16)
+        transmit = 0x00
+
+        if "Publish Address = a group address" in desc:
+            pub_addr = 0xC000
+
+        btp.mesh_cfg_model_publication_set(stack.mesh.net_idx, stack.mesh.addr, el_address, model_id, pub_addr,
+                                              appkey_index, cred_flag, ttl, period, transmit)
+        return stack.mesh.status == 0x00
+
+    if 'Config Model Publication VIRTUAL ADDRESS SET' in desc:
+        pattern = re.compile(
+            r'(Element\sAddress|Publish\sAddress|AppKey\sIndex|Credential\sFlag|RFU|Publish\sTTL|Publish\s'
+            r'Period|ModelId)\s=\s+([0-9a-fA-F]+)')
+
+        params = pattern.findall(desc)
+
+        if not params:
+            logging.error("%s parsing error", hdl_wid_650.__name__)
+            return False
+        params = dict(params)
+
+        el_address = int(params.get('Element Address'), 16)
+        appkey_index = int(params.get('AppKey Index'), 16)
+        cred_flag = int(params.get('Credential Flag'), 16)
+        ttl = int(params.get('Publish TTL'), 16)
+        period = int(params.get('Publish Period'), 16)
+        model_id = int(params.get('ModelId'), 16)
+        transmit = 0x00
+        app_key = '0123456789abcdef0123456789fedcba'
+
+        btp.mesh_cfg_appkey_add(stack.mesh.net_idx, stack.mesh.addr, stack.mesh.net_key_index, app_key,
+                                appkey_index)
+        btp.mesh_cfg_model_app_bind(stack.mesh.net_idx, stack.mesh.addr, el_address, appkey_index,
+                                    +                                    model_id)
+
+
+        btp.mesh_cfg_model_pub_va_set(stack.mesh.net_idx, stack.mesh.addr, el_address, model_id, stack.mesh.dev_uuid,
+                                      appkey_index, cred_flag, ttl, period, transmit)
+        logging.debug("Status = 0x%2x", stack.mesh.status)
+        return stack.mesh.status == 0x00
+
+    if "NetKey Add" in desc:
+        net_key_idx = 0x0001
+        net_key = '00000000000000000000000000000001'
+
+        btp.mesh_cfg_netkey_add(stack.mesh.net_idx, stack.mesh.addr, net_key, net_key_idx)
+
+        return stack.mesh.status == 0x00
+
+    if "NetKey Update" in desc:
+        net_key = '00000000000000000000000000000001'
+
+        btp.mesh_cfg_netkey_update(stack.mesh.net_idx, stack.mesh.addr, net_key, stack.mesh.net_key_index)
+
+        return stack.mesh.status == 0x00
+
+    if "NetKey Get" in desc:
+        btp.mesh_cfg_netkey_get(stack.mesh.net_idx, stack.mesh.addr)
+
+        return True
+
+    if "NetKey Delete" in desc:
+        pattern = re.compile(r'index\s+([0-9a-fA-F]+)')
+        val = pattern.findall(desc)
+        if not val:
+            logging.error("%s parsing error", hdl_wid_650.__name__)
+            return False
+        net_key_idx = int(val[0], 16)
+        btp.mesh_cfg_netkey_del(stack.mesh.net_idx, stack.mesh.addr, net_key_idx)
+
+        return stack.mesh.status == 0x00
+
+    if "Node Reset" in desc:
+        btp.mesh_cfg_node_reset(stack.mesh.net_idx, stack.mesh.addr)
+
+        return stack.mesh.status == 0x01
 
 
 def hdl_wid_652(desc):

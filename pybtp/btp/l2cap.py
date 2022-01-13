@@ -21,7 +21,7 @@ import struct
 
 from ptsprojects.stack import get_stack
 from pybtp import defs
-from pybtp.types import addr2btp_ba, L2capSecLevels
+from pybtp.types import addr2btp_ba, L2CAPConnectionResponse
 from pybtp.btp.btp import CONTROLLER_INDEX, btp_hdr_check, pts_addr_get, pts_addr_type_get, get_iut_method as get_iut
 from pybtp.btp.gap import gap_wait_for_connection
 
@@ -53,7 +53,7 @@ def l2cap_command_rsp_succ(op=None):
     btp_hdr_check(tuple_hdr, defs.BTP_SERVICE_ID_L2CAP, op)
 
 
-def l2cap_conn(bd_addr, bd_addr_type, psm, mtu=0, num=1):
+def l2cap_conn(bd_addr, bd_addr_type, psm, mtu=0, num=1, ecfc=0):
     logging.debug("%s %r %r %r", l2cap_conn.__name__, bd_addr, bd_addr_type,
                   psm)
     iutctl = get_iut()
@@ -71,6 +71,7 @@ def l2cap_conn(bd_addr, bd_addr_type, psm, mtu=0, num=1):
     data_ba.extend(struct.pack('H', psm))
     data_ba.extend(struct.pack('H', mtu))
     data_ba.extend(struct.pack('B', num))
+    data_ba.extend(struct.pack('B', ecfc))
 
     iutctl.btp_socket.send(*L2CAP['connect'], data=data_ba)
 
@@ -138,8 +139,8 @@ def l2cap_send_data(chan_id, val, val_mtp=None):
     stack.l2cap.tx(chan_id, val)
 
 
-def l2cap_listen(psm, transport, mtu=0, req_sec=L2capSecLevels.no_sec, req_key_size=0, response=0):
-    logging.debug("%s %r %r %r %r", l2cap_le_listen.__name__, psm, transport, req_sec, req_key_size)
+def l2cap_listen(psm, transport, mtu=0, response=L2CAPConnectionResponse.success):
+    logging.debug("%s %r %r %r %r", l2cap_le_listen.__name__, psm, transport, mtu, response)
 
     iutctl = get_iut()
 
@@ -149,8 +150,6 @@ def l2cap_listen(psm, transport, mtu=0, req_sec=L2capSecLevels.no_sec, req_key_s
     data_ba = bytearray(struct.pack('H', psm))
     data_ba.extend(struct.pack('B', transport))
     data_ba.extend(struct.pack('H', mtu))
-    data_ba.extend(struct.pack('B', req_sec))
-    data_ba.extend(struct.pack('B', req_key_size))
     data_ba.extend(struct.pack('H', response))
 
     iutctl.btp_socket.send(*L2CAP['listen'], data=data_ba)

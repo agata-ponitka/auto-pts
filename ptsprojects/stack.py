@@ -278,8 +278,9 @@ class Mesh:
         self.flags = 0x00
         self.iv_idx = 0x00000000
         self.seq_num = 0x00000000
-        self.addr = 0x0b0c
+        self.address = 0x0003
         self.dev_key = '0123456789abcdef0123456789abcdef'
+        self.iut_is_provisioner = False
 
         # health model data
         self.health_test_id = Property(0x00)
@@ -309,6 +310,17 @@ class Mesh:
         # Node Identity
         self.proxy_identity = False
 
+        # Config Client
+        self.net_idx = 0x0000
+        self.addr = 0x0001
+        self.net_key_index = 0x0000
+        self.el_address = 0x0001
+        self.status = Property(None)
+        self.model_data = Property(None)
+        self.app_idx = 0x0000
+        self.address_lt2 = None
+        self.is_prov_adv = None
+
         # MMDL expected status data
         self.expect_status_data = Property({
             "Ack": True,
@@ -322,6 +334,9 @@ class Mesh:
             'Status': [],
             'Remaining Time': 0,
         })
+
+    def set_iut_provisioner(self, _is_prov):
+        self.iut_is_provisioner = _is_prov
 
     def recv_status_data_set(self, key, data):
         if key in self.recv_status_data.data:
@@ -371,7 +386,14 @@ class Mesh:
 
         return False
 
-    def wait_for_attention_timer_exp(self, timeout):
+    def wait_for_prov_link_close(self, timeout):
+        if not self.last_seen_prov_link_state.data:
+            self.last_seen_prov_link_state.data = ('uninitialized', None)
+
+        state, _ = self.last_seen_prov_link_state.data
+        if state == 'closed':
+            return True
+
         flag = Event()
         flag.set()
 
@@ -379,7 +401,7 @@ class Mesh:
         t.start()
 
         while flag.is_set():
-            state, bearer = self.last_seen_prov_link_state.data
+            state, _ = self.last_seen_prov_link_state.data
             if state == 'closed':
                 t.cancel()
                 return True
@@ -734,6 +756,8 @@ class Synch:
 class Gatt:
     def __init__(self):
         self.server_db = GattDB()
+        self.last_unique_uuid = 0
+        self.verify_values = []
 
     def attr_value_set(self, handle, value):
         attr = self.server_db.attr_lookup_handle(handle)

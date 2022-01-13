@@ -19,8 +19,8 @@ import sys
 import time
 
 from ptsprojects.stack import get_stack
-from pybtp import btp
-from pybtp.types import BTPError
+from pybtp import btp, defs
+from pybtp.types import BTPError, L2CAPConnectionResponse
 
 log = logging.debug
 
@@ -35,6 +35,21 @@ def l2cap_wid_hdl(wid, description, test_case_name):
         return handler(description)
     except AttributeError as e:
         logging.exception(e)
+
+
+def l2cap_wid_hdl_one_ecfc_chan(wid, description, test_case_name):
+    log("%s, %r, %r, %s", l2cap_wid_hdl.__name__, wid, description,
+        test_case_name)
+
+    if wid == 255:
+        stack = get_stack()
+        l2cap = stack.l2cap
+
+        btp.l2cap_conn(None, None, l2cap.psm, l2cap.initial_mtu, 1, 1)
+        return True
+    else:
+        return l2cap_wid_hdl(wid, description, test_case_name)
+
 
 
 # wid handlers section begin
@@ -353,14 +368,29 @@ def hdl_wid_105(desc):
 
 
 def hdl_wid_106(desc):
+    stack = get_stack()
+    l2cap = stack.l2cap
+
+    btp.l2cap_listen(l2cap.psm, defs.L2CAP_TRANSPORT_LE,
+                     l2cap.initial_mtu, L2CAPConnectionResponse.insufficient_authentication)
     return True
 
 
 def hdl_wid_107(desc):
+    stack = get_stack()
+    l2cap = stack.l2cap
+
+    btp.l2cap_listen(l2cap.psm, defs.L2CAP_TRANSPORT_LE,
+                     l2cap.initial_mtu, L2CAPConnectionResponse.insufficient_authorization)
     return True
 
 
 def hdl_wid_108(desc):
+    stack = get_stack()
+    l2cap = stack.l2cap
+
+    btp.l2cap_listen(l2cap.psm, defs.L2CAP_TRANSPORT_LE,
+                     l2cap.initial_mtu, L2CAPConnectionResponse.insufficient_encryption_key_size)
     return True
 
 
@@ -454,7 +484,7 @@ def hdl_wid_255(desc):
     stack = get_stack()
     l2cap = stack.l2cap
 
-    btp.l2cap_conn(None, None, l2cap.psm, l2cap.initial_mtu, 2)
+    btp.l2cap_conn(None, None, l2cap.psm, l2cap.initial_mtu, 2, 1)
     return True
 
 
