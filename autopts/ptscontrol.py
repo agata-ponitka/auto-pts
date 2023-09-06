@@ -42,6 +42,7 @@ import shutil
 import xmlrpc.client
 import ctypes
 import threading
+from time import sleep
 from pathlib import Path
 
 import win32com.client
@@ -63,6 +64,7 @@ logtype_whitelist = [ptstypes.PTS_LOGTYPE_START_TEST,
 
 PTS_START_LOCK = threading.RLock()
 
+READY = False
 
 def pts_lock_wrapper(lock):
     def _pts_lock_wrapper(func):
@@ -309,6 +311,9 @@ class PyPTS:
         self._com_sender = None
         self._preferred_device = device
         self._device = None
+        self.ready_test = False
+        self.project_name = None
+        self.test_case_name = None
 
         # This is done to have valid _pts in case client does not restart_pts
         # and uses other methods. Normally though, the client should
@@ -629,35 +634,6 @@ class PyPTS:
 
         return self._pts.GetTestCaseDescription(project_name, test_case_index)
 
-    def _revert_temp_changes(self):
-        """Recovery default state for test case"""
-
-        if not self._temp_changes:
-            return
-
-        log("%s", self._revert_temp_changes.__name__)
-
-        self._recov_in_progress = True
-
-        for tch in self._temp_changes:
-            func = tch[0]
-
-            if func == self.update_pixit_param:
-                # Look for possible recoverable parameter
-                try:
-                    '''Search for matching recover function, PIXIT and recover
-                    if value was changed. '''
-                    item = next(x for x in self._recov if ((x[0] ==
-                                                            self.set_pixit) and (x[1][0] ==
-                                                                                 tch[1][0]) and (x[1][1] == tch[1][1])))
-
-                    self._recover_item(item)
-
-                except StopIteration:
-                    continue
-
-        self._recov_in_progress = False
-        self._temp_changes = []
 
     def run_test_case(self, project_name, test_case_name):
         """Executes the specified Test Case.
@@ -665,39 +641,31 @@ class PyPTS:
         If an error occurs when running test case returns code of an error as a
         string, otherwise returns an empty string
         """
-
-        log("Starting %s %s %s", self.run_test_case.__name__, project_name,
-            test_case_name)
-
         self.last_start_time = time.time()
-
         self._pts_logger.set_test_case_name(test_case_name)
 
-        error_code = ""
+        self.ready_test = True
+        self.project_name = project_name
+        self.test_case_name = test_case_name
 
-        try:
-            self._pts.RunTestCase(project_name, test_case_name)
+        #test.set(self._pts, project_name, test_case_name)
 
-            self._revert_temp_changes()
+        return
 
-        except pythoncom.com_error as e:
-            error_code = parse_ptscontrol_error(e)
-            self.stop_test_case(project_name, test_case_name)
-            self.recover_pts()
 
-        log("Done %s %s %s out: %s", self.run_test_case.__name__,
-            project_name, test_case_name, error_code)
 
-        return error_code
 
-    def stop_test_case(self, project_name, test_case_name):
-        """NOTE: According to documentation 'StopTestCase() is not currently
-        implemented'"""
+    def get_ready_test(self):
+        return self.ready_test
 
-        log("%s %s %s", self.stop_test_case.__name__, project_name,
-            test_case_name)
+    def get_test_case_name(self):
+        return self.test_case_name
 
-        self._pts.StopTestCase()
+    def get_project_name(self):
+        return self.project_name
+
+    def get_pts(self):
+        return self._pts
 
     def get_test_case_count_from_tss_file(self, project_name):
         """Returns the number of test cases that are available in the specified

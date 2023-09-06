@@ -284,6 +284,7 @@ class Server(threading.Thread):
         self.pts_recovery_request = False
         self.name = 'S-' + str(self._args.srv_port)
         self.is_ready = False
+        self.test = None
         if self._args.ykush and type(self._args.ykush) is list:
             self._args.ykush = ' '.join(self._args.ykush)
 
@@ -364,6 +365,10 @@ class Server(threading.Thread):
 
         if self.pts._device:
             self._device = self.pts._device
+
+        test = RunTests()
+        test.set(self.pts)
+        test.start()
 
         self.server.register_instance(self.pts)
         print("OK")
@@ -474,6 +479,204 @@ class Server(threading.Thread):
     def shutdown_pts_bpv(self):
         kill_all_processes('PTS.exe')
         kill_all_processes('Fts.exe')
+
+    def get_test(self):
+        return self.test
+
+class RunTests(threading.Thread):
+    def __init__(self, _args=None):
+        threading.Thread.__init__(self, daemon=True)
+        self.last_start_time = time.time()
+        self.pts = None
+        self.end = False
+        self.is_ready = False
+        self.project_name = None
+        self.test_case_name = None
+        self._recov = []
+        self._temp_changes = []
+        self._recov_in_progress = False
+        self.error_code = ""
+        self.pts_srv = None
+
+        log("%s", self.__init__.__name__)
+
+    def set(self, pts):
+        self.pts_srv = pts
+
+    def run(self):
+
+        while not self.end:
+            ready = self.pts_srv.get_ready_test()
+            if ready:
+                self.pts = self.pts_srv.get_pts()
+                self.project_name = self.pts_srv.get_project_name()
+                self.test_case_name = self.pts_srv.get_test_case_name()
+
+                self.run_test(self.project_name, self.test_case_name)
+
+            sleep(5)
+
+    def stop_test_case(self, project_name, test_case_name):
+        """NOTE: According to documentation 'StopTestCase() is not currently
+        implemented'"""
+
+        log("%s %s %s", self.stop_test_case.__name__, project_name,
+            test_case_name)
+
+        self.pts.StopTestCase()
+
+    def _add_temp_change(self, func, *args, **kwds):
+        """Add function to set temporary value"""
+        if not self._recov_in_progress:
+            log("%s %r %r %r", self._add_temp_change.__name__, func, args, kwds)
+            self._temp_changes.append((func, args, kwds))
+
+    def _recover_item(self, item):
+        """Recovery item wraper"""
+
+        func = item[0]
+        args = item[1]
+        kwds = item[2]
+        log("%s, Recovering: %s, %r %r", self._recover_item.__name__,
+            func, args, kwds)
+
+        func(*args, **kwds)
+
+    def add_recov(self, func, *args, **kwds):
+        """Add function to recovery list"""
+        if self._recov_in_progress:
+            return
+
+        log("%s %r %r %r", self.add_recov.__name__, func, args, kwds)
+
+        # Re-set recovery element to avoid duplications
+        if func == self.set_pixit:  # pylint: disable=W0143
+            profile = args[0]
+            pixit = args[1]
+            # Look for possible re-setable PIXIT
+            try:
+                # Search for matching recover function, PIXIT and recover if value was changed.
+                item = next(x for x in self._recov if ((x[0] ==
+                                                        self.set_pixit) and (x[1][0] == profile) and
+                                                       (x[1][1] == pixit)))
+
+                self._recov.remove(item)
+                log("%s, re-set pixit: %s", self.add_recov.__name__, pixit)
+
+            except StopIteration:
+                pass
+
+        self._recov.append((func, args, kwds))
+
+    def update_pixit_param(self, project_name, param_name, new_param_value):
+        """Updates PIXIT
+
+        This wrapper handles exceptions that PTS throws if PIXIT param is
+        already set to the same value.
+
+        PTS throws exception if the value passed to UpdatePixitParam is the
+        same as the value when PTS was started.
+
+        In C++ HRESULT error with this value is returned:
+        PTSCONTROL_E_PIXIT_PARAM_NOT_CHANGED (0x849C0021)
+
+        """
+        log("%s %s %s %s", self.update_pixit_param.__name__, project_name,
+            param_name, new_param_value)
+
+        try:
+            self.pts.UpdatePixitParam(
+                project_name, param_name, new_param_value)
+            self._add_temp_change(self.update_pixit_param, project_name,
+                                  param_name)
+
+        except pythoncom.com_error as e:
+            ptscontrol.parse_ptscontrol_error(e)
+
+    def set_pixit(self, project_name, param_name, param_value):
+        """Set PIXIT
+
+        Method used to setup workspace default PIXIT
+
+        This wrapper handles exceptions that PTS throws if PIXIT param is
+        already set to the same value.
+
+        PTS throws exception if the value passed to UpdatePixitParam is the
+        same as the value when PTS was started.
+
+        In C++ HRESULT error with this value is returned:
+        PTSCONTROL_E_PIXIT_PARAM_NOT_CHANGED (0x849C0021)
+
+        """
+        log("%s %s %s %s", self.set_pixit.__name__, project_name,
+            param_name, param_value)
+
+        try:
+            self.pts.UpdatePixitParam(project_name, param_name, param_value)
+            self.add_recov(self.set_pixit, project_name, param_name,
+                           param_value)
+
+        except pythoncom.com_error as e:
+            ptscontrol.parse_ptscontrol_error(e)
+
+    def _revert_temp_changes(self):
+        """Recovery default state for test case"""
+
+        if not self._temp_changes:
+            return
+
+        log("%s", self._revert_temp_changes.__name__)
+
+        self._recov_in_progress = True
+
+        for tch in self._temp_changes:
+            func = tch[0]
+
+            if func == self.update_pixit_param:
+                # Look for possible recoverable parameter
+                try:
+                    '''Search for matching recover function, PIXIT and recover
+                    if value was changed. '''
+                    item = next(x for x in self._recov if ((x[0] ==
+                                                            self.set_pixit) and (x[1][0] ==
+                                                                                 tch[1][0]) and (x[1][1] == tch[1][1])))
+
+                    self._recover_item(item)
+
+                except StopIteration:
+                    continue
+
+        self._recov_in_progress = False
+        self._temp_changes = []
+
+    def run_test(self, project_name, test_case_name):
+        """Executes the specified Test Case.
+
+        If an error occurs when running test case returns code of an error as a
+        string, otherwise returns an empty string
+        """
+
+        log("Starting %s %s %s", self.run_test.__name__, project_name,
+            test_case_name)
+
+        try:
+            self.pts.RunTestCase(project_name, test_case_name)
+            self._revert_temp_changes()
+
+        except pythoncom.com_error as e:
+            self.error_code = ptscontrol.parse_ptscontrol_error(e)
+            self.stop_test_case(project_name, test_case_name)
+            self.pts.recover_pts()
+
+        log("Done %s %s %s out: %s", self.run_test.__name__,
+            project_name, test_case_name, self.error_code)
+
+    def terminate(self):
+        self.is_ready = False
+        self.end = True
+
+    def ready(self):
+        self.is_ready = True
 
 
 def multi_main(_args, _superguard):
