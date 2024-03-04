@@ -213,6 +213,7 @@ def test_cases(ptses):
         TestFunc(btp.core_reg_svc_gatt),
         TestFunc(stack.gatt_init),
         TestFunc(btp.gap_set_io_cap, IOCap.keyboard_display),
+        TestFunc(stack.bap_init),
 
         # We do this on test case, because previous one could update
         # this if RPA was used by PTS

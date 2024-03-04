@@ -19,7 +19,7 @@ import re
 import struct
 from time import sleep
 
-from autopts.ptsprojects.stack import get_stack, ConnParams
+from autopts.ptsprojects.stack import get_stack, ConnParams, WildCard
 from autopts.pybtp import types
 from autopts.pybtp import btp
 from autopts.pybtp.types import Prop, Perm, UUID, AdType, bdaddr_reverse, WIDParams, IOCap, OwnAddrType
@@ -1283,9 +1283,14 @@ def hdl_wid_300(_: WIDParams):
     btp.gap_padv_start()
     return True
 
-def hdl_wid_301(_: WIDParams):
-    # Please click OK if IUT did not receive periodic advertising report.
+def hdl_wid_301(params: WIDParams):
+    # Please click OK if IUT receive periodic advertising report.
     stack = get_stack()
+
+    if params.test_case_name.startswith("GAP/SEC/SEM/BI-13-C"):
+        # create periodic sync
+        btp.gap_padv_create_sync(0, 0, 10, 0)
+
     return stack.gap.wait_periodic_report(10)
 
 def hdl_wid_302(_: WIDParams):
@@ -1346,6 +1351,56 @@ def hdl_wid_309(_: WIDParams):
     # information.
     stack = get_stack()
     return stack.gap.wait_periodic_transfer_received(10)
+
+def hdl_wid_350(_: WIDParams):
+    """
+    Please synchronize with Broadcast ISO request.
+    """
+    stack = get_stack()
+
+    ev = stack.bap.wait_pa_sync_req_ev(WildCard(), WildCard(), 30, False)
+    if ev is None:
+        log('PA sync request not received.')
+        return False
+
+    log(f'Synchronizing to broadcast with ID {hex(ev["broadcast_id"])}')
+
+    btp.bap_broadcast_sink_sync(ev['broadcast_id'], ev['advertiser_sid'],
+                                5, 1000, ev['past_avail'], ev['src_id'],
+                                ev['addr_type'], ev['addr'])
+
+    broadcast_id = ev['broadcast_id']
+    ev = stack.bap.wait_bis_found_ev(broadcast_id, 20, False)
+    if ev is None:
+        log(f'BIS not found, broadcast ID {broadcast_id}')
+        return False
+
+    bis_id = ev['bis_id']
+    broadcast_id = ev['broadcast_id']
+    ev = stack.bap.wait_bis_synced_ev(broadcast_id, bis_id, 10, False)
+    if ev is None:
+        log(f'Failed to sync to BIS with ID {bis_id}, broadcast ID {broadcast_id}')
+        return False
+
+    return True
+
+def hdl_wid_353(_: WIDParams):
+    """
+    Description: Please configure IUT security to Mode 3 Level 2 or Level 3.
+    """
+    return True
+
+def hdl_wid_354(_: WIDParams):
+    """
+    Description: Please configure IUT security to Mode 3 Level 2 or Level 3.
+    """
+    stack = get_stack()
+
+    btp.gap_padv_create_sync(0, 0, 10, 0)
+    if not stack.gap.wait_periodic_established(10):
+        return True
+
+    return False
 
 def hdl_wid_400(_: WIDParams):
     btp.set_filter_accept_list()
