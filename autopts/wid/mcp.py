@@ -34,7 +34,7 @@ class SearchTypes:
     ONLY_TRACKS = 0x08
     ONLY_GORUPS = 0x09
 
-
+# wid handlers section begin
 def hdl_wid_15(params: WIDParams):
     """Please confirm IUT received all error Result Codes -
     OPCODE NOT SUPPORTED(0x02), MEDIA PLAYER INACTIVE(0x03)

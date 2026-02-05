@@ -22,7 +22,7 @@ from autopts.pybtp.types import WIDParams
 
 log = logging.debug
 
-
+# wid handlers section begin
 def hdl_wid_101(params: WIDParams):
     """Please generate incoming call from the Server"""
 

@@ -39,7 +39,7 @@ def iut_reset():
     btp.gap_read_ctrl_info()
     btp.mesh_start()
 
-
+# wid handlers section begin
 def hdl_wid_13(_: WIDParams):
     """
     Implements: RE_PROVISIONING_PROVISIONER

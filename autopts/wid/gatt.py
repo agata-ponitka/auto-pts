@@ -37,8 +37,6 @@ from autopts.pybtp.types import UUID, BTPError, IOCap, Perm, Prop, WIDParams
 log = logging.debug
 
 indication_subbed_already = False
-gatt_wid_hdl = get_wid_handler("mynewt", "gatt")
-
 
 def gattc_wid_hdl_multiple_indications(wid, description, test_case_name):
     global indication_subbed_already
