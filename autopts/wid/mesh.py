@@ -26,8 +26,8 @@ log = logging.debug
 
 
 def _make_mesh_handler():
-    from autopts.ptsprojects.common_wid import get_wid_handler
-    return get_wid_handler("zephyr", "mesh")
+    from autopts.ptsprojects.common_wid import Backend, Profile, get_wid_handler
+    return get_wid_handler(Backend.ZEPHYR, Profile.MESH)
 
 
 mesh_wid_hdl = _make_mesh_handler()

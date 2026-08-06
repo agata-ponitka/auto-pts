@@ -84,9 +84,9 @@ from autopts.ptsprojects.{project_name}.ztestcase import ZTestCase
 from autopts.pybtp import btp
 from autopts.client import get_unique_name
 from autopts.pybtp.types import Addr
-from autopts.ptsprojects.common_wid import get_wid_handler
+from autopts.ptsprojects.common_wid import Backend, Profile, get_wid_handler
 
-{profile_name_lower}_wid_hdl = get_wid_handler("{project_name}", "{profile_name_lower}")
+{profile_name_lower}_wid_hdl = get_wid_handler(Backend.{project_name.upper()}, Profile.{profile_name_upper})
 
 def set_pixits(ptses):
     pts = ptses[0]
@@ -310,6 +310,9 @@ changes_to_prepend = {
     f'{AUTOPTS_REPO}/autopts/pybtp/btp/__init__.py': {1: f"from autopts.pybtp.btp.{profile_name_lower} import *"
     "  # noqa: F403 # used in many files : TODO import directly in files not with *\n"},
     f'{AUTOPTS_REPO}/doc/overview.txt': {1: f" {hex(int(profile_id))} {profile_name_upper} Service\n"},
+    f'{AUTOPTS_REPO}/autopts/ptsprojects/common_wid.py': {
+        1: f'    {profile_name_upper} = "{profile_name_lower}"\n',
+    },
     f'{AUTOPTS_REPO}/autopts/pybtp/common.py': {
         1: f"""    "{profile_name_upper}": {'{'}
         "supported_commands": defs.BTP_{profile_name_upper}_CMD_READ_SUPPORTED_COMMANDS

@@ -128,9 +128,9 @@ Keep all BTP interface opcodes inside the file, i.e. all the BTP commands and ev
 ### `autopts/wid/profile.py`
 
 This file is for MMI/WID handlers of the profile, generic for all projects. The handlers
-make use of the BTP commands, responses and events. If there is a need for a project specific
-handler, then it should be added into the `autopts/ptsprojects/zephyr/profile_wid.py` inside
-the project.
+make use of the BTP commands, responses and events. If there is a need for a project-specific
+handler, it should be added directly inside `autopts/ptsprojects/zephyr/profile.py` or in a
+dedicated `autopts/ptsprojects/zephyr/profile_wid.py` file inside the project.
 
 ### `autopts/ptsprojects/stack/layers/profile.py`
 
@@ -167,6 +167,11 @@ before and after running test cases of the profile. A short version of the funct
 could look like this:
 
 ```python
+from autopts.ptsprojects.common_wid import Backend, Profile, get_wid_handler
+
+profile_wid_hdl = get_wid_handler(Backend.ZEPHYR, Profile.PROFILE)
+
+
 def test_cases(ptses):
     """Returns a list of PROFILE test cases
     ptses -- list of PyPTS instances"""
@@ -183,7 +188,7 @@ def test_cases(ptses):
     test_case_name_list = pts.get_test_case_list('PROFILE')
     tc_list = []
 
-    # Use the same preconditions and MMI/WID handler for all test cases of the profile 
+    # Use the same preconditions and MMI/WID handler for all test cases of the profile
     for tc_name in test_case_name_list:
         instance = ZTestCase('PROFILE', tc_name, cmds=pre_conditions,
                              generic_wid_hdl=profile_wid_hdl)
@@ -193,21 +198,26 @@ def test_cases(ptses):
     return tc_list
 ```
 
-In almost every profile there are multiple test cases that need a custom preconditions,
-e.g. at the start of a test case PTS expects a specific advertisement
-in the air, but there is no MMI (WID) for it. Test cases with multiple Lower Testers
-(PTS instances) usually need to be synchronized with Synch Points to avoid collision
-of BTP commands, so those can be customized here too.
+The `profile_wid_hdl` is created by `get_wid_handler(Backend.ZEPHYR, Profile.PROFILE)`, which
+returns a handler that will look up the right `hdl_wid_<N>` function for any MMI (WID)
+request received from the Lower Tester (PTS). It searches for handlers in
+`autopts/wid/profile.py`, which holds generic implementations shared across all projects.
+`Backend` and `Profile` are enums defined in `autopts/ptsprojects/common_wid.py` — when
+adding a new profile, add a `Profile.<NAME> = "<name>"` entry there.
 
-The `profile_wid_hdl` parameter of the TestCase class is a generic handler that
-will find a right handler for an MMI (WID) request received from Lower Tester
-(PTS instance). In most test cases a project will use handlers only from
-`autopts/wid`, but sometimes a custom, project-specific WID is required.
-It is convenient to create a separate file in your project for this, e.g:
-`autopts/ptsprojects/zephyr/profile_wid.py`:
+In almost every profile there are multiple test cases that need custom preconditions,
+e.g. at the start of a test case PTS expects a specific advertisement in the air, but
+there is no MMI (WID) for it. Test cases with multiple Lower Testers (PTS instances)
+usually need to be synchronized with Synch Points to avoid collision of BTP commands,
+so those can be customized here too.
+
+If a project-specific WID handler is needed (i.e. the generic one in `autopts/wid/profile.py`
+does not apply to your backend), create `autopts/ptsprojects/zephyr/profile_wid.py` and add
+`hdl_wid_<N>` functions there. `get_wid_handler` will automatically discover this file and
+search it **before** the generic `autopts/wid/profile.py`, so no additional wiring is required.
 
 ```python
-# profile_wid.py file
+# autopts/ptsprojects/zephyr/profile_wid.py
 import logging
 
 from autopts.pybtp.types import WIDParams
@@ -215,6 +225,7 @@ from autopts.pybtp.types import WIDParams
 log = logging.debug
 
 
+# wid handlers section begin
 def hdl_wid_104(_: WIDParams):
     """
     Confirm if the Lower Tester received ISO stream.
@@ -254,6 +265,11 @@ but if it applies to most of the profile test cases, then just use `pre_conditio
 to skip listing a hundred of test case names.
 
 ```python
+from autopts.ptsprojects.common_wid import Backend, Profile, get_wid_handler
+
+profile_wid_hdl = get_wid_handler(Backend.ZEPHYR, Profile.PROFILE)
+
+
 def test_cases(ptses):
     """Returns a list of PROFILE test cases
     ptses -- list of PyPTS instances"""
@@ -331,13 +347,13 @@ Synch Points mechanism.
                       TestFunc(get_stack().synch.add_synch_element,
                                [SynchPoint("BAP/BA/BASS/BV-04-C_LT2", 384),
                                 SynchPoint("BAP/BA/BASS/BV-04-C", 345)])],
-                  generic_wid_hdl=get_wid_handler("zephyr", "bap"),
+                  generic_wid_hdl=bap_wid_hdl,
                   lt2="BAP/BA/BASS/BV-04-C_LT2"),
     ]
 
     test_cases_lt2 = [
         ZTestCaseSlave("BAP", "BAP/BA/BASS/BV-04-C_LT2",
                        cmds=pre_conditions_lt2,
-                       generic_wid_hdl=get_wid_handler("zephyr", "bap")),
+                       generic_wid_hdl=bap_wid_hdl,
     ]
 ```

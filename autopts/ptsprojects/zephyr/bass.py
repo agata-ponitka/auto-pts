@@ -18,7 +18,7 @@
 from queue import Queue
 
 from autopts.client import get_unique_name
-from autopts.ptsprojects.common_wid import get_wid_handler
+from autopts.ptsprojects.common_wid import Backend, Profile, get_wid_handler
 from autopts.ptsprojects.stack import SynchPoint, get_stack
 from autopts.ptsprojects.testcase import TestFunc
 from autopts.ptsprojects.zephyr.ztestcase import ZTestCase, ZTestCaseSlave
@@ -27,7 +27,7 @@ from autopts.pybtp.btp import lt2_addr_get
 from autopts.pybtp.types import UUID, Addr, AdFlags, AdType, uuid_to_le_hex_str
 
 broadcast_code = '0102680553F1415AA265BBAFC6EA03B8'
-bass_wid_hdl = get_wid_handler("zephyr", "bass")
+bass_wid_hdl = get_wid_handler(Backend.ZEPHYR, Profile.BASS)
 
 
 def set_pixits(ptses):
